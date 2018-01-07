@@ -66,20 +66,19 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 */
 	public function init() {
 		add_action( 'init', array( $this, 'register_our_post_type' ) );
+		add_action( 'init', array( $this, 'link_post_type_to_events' ) );
+		add_action( 'wp_loaded', array( $this, 'set_our_capabilities' ) );
 		add_filter( 'tribe_events_linked_post_type_args', array( $this, 'filter_linked_post_type_args' ), 10, 2 );
 		add_filter( 'tribe_events_linked_post_id_field_index', array( $this, 'linked_post_id_field_index' ), 10, 2 );
+		add_filter( 'tribe_events_linked_post_name_field_index', array( $this, 'get_post_type_name_field_index' ), 10, 2 );
 		add_filter( 'tribe_events_linked_post_type_container', array( $this, 'linked_post_type_container' ), 10, 2 );
-		add_action( 'init', array( $this, 'link_post_type_to_events' ) );
 		add_action( 'tribe_events_linked_post_new_form', array( $this, 'event_edit_form_create_fields' ) );
-		add_action( 'tribe_events_linked_post_create_' . $this->get_post_type_key(), array(
-			$this,
-			'event_edit_form_save_data',
-		), 10, 5 );
-		add_filter( 'tribe_events_linked_post_meta_values__tribe_linked_post_' . $this->get_post_type_key(), array(
-			$this,
-			'filter_out_invalid_post_ids',
-		) );
+		add_action( 'tribe_events_linked_post_create_' . $this->get_post_type_key(), array( $this, 'event_edit_form_save_data' ), 10, 5 );
+		add_filter( 'tribe_events_linked_post_meta_values__tribe_linked_post_' . $this->get_post_type_key(), array( $this, 'filter_out_invalid_post_ids' ) );
 		add_action( 'admin_menu', array( $this, 'add_meta_box_to_event_editing' ) );
+		add_action( 'save_post_' . $this->get_post_type_key(), array( $this, 'save_data_from_meta_box' ), 16, 2 );
+
+		// TODO
 		add_action( 'tribe_events_single_event_after_the_meta', array( $this, 'output_linked_posts' ) );
 	}
 
@@ -88,9 +87,11 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 *
 	 * Also converts Post ID-looking strings to integers.
 	 *
+	 * @see Tribe__Events__Linked_Posts::META_KEY_PREFIX
 	 * @see Tribe__Events__Linked_Posts::get_meta_key()
 	 *
-	 * @param array $current_linked_posts The array of the current meta field's values.
+	 * @param array $current_linked_posts The array of our post type's Post IDs
+	 *                                    currently linked to a single event.
 	 *
 	 * @return array
 	 */
@@ -121,6 +122,8 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * Enter "Phone" or "Email Address" -- however you want it to look to the
 	 * user, and the actual custom field key will be created from it.
 	 *
+	 * @see Tribe__Extension__Instructors_Linked_Post_Type::sanitize_a_custom_fields_value()
+	 *
 	 * @return array
 	 */
 	protected function get_custom_field_labels() {
@@ -136,10 +139,44 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	/**
+	 * Validation for each custom field.
+	 *
+	 * By default, all custom fields are ran through sanitize_meta().
+	 *
+	 * @link https://developer.wordpress.org/themes/theme-security/data-sanitization-escaping/
+	 *
+	 * @return string
+	 */
+	protected function sanitize_a_custom_fields_value( $meta_key = '', $meta_value = '' ) {
+		if (
+			empty( $meta_key )
+			|| empty( $meta_value )
+		) {
+			return '';
+		}
+
+		foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
+			$custom_field_key = $this->get_a_custom_field_key_from_label( $custom_field_label );
+			if ( $custom_field_key == $meta_key ) {
+				// TODO: Add your own logic here for each field label that requires it.
+				// Note that no help text regarding this validation is displayed to the user so they may be surprised by the result (e.g. if they had a typo in the email address, forgetting the @ symbol).
+				if ( 'Website' == $custom_field_label ) {
+					$meta_value = esc_url_raw( $meta_value );
+				}
+				if ( 'Email Address' == $custom_field_label ) {
+					$meta_value = sanitize_email( $meta_value );
+				}
+			}
+		}
+
+		return $meta_value;
+	}
+
+	/**
 	 * Our post type's custom field label names.
 	 *
 	 * Enter "Phone" or "Email Address" -- however you want it to look to the
-	 * user, and the actual custom field key will be created from it.
+	 * user -- and the actual custom field key will be created from it.
 	 *
 	 * @return string
 	 */
@@ -164,7 +201,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * key, and then prepended with an underscore so it's "hidden" from default
 	 * wp-admin Custom Fields editing.
 	 *
-	 * @see $this->get_custom_field_labels()
+	 * @see Tribe__Extension__Instructors_Linked_Post_Type::get_custom_field_labels()
 	 * @see sanitize_key()
 	 *
 	 * @return array
@@ -211,31 +248,82 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	/**
 	 * Set the arguments for and register the post type.
 	 *
+	 * @link https://developer.wordpress.org/reference/functions/get_post_type_labels/
 	 * @link https://developer.wordpress.org/reference/functions/register_post_type/
+	 *
+	 * @see Linked_Posts::register_linked_post_type()
 	 */
 	public function register_our_post_type() {
+		$post_type_key = $this->get_post_type_key();
+
 		$labels = array(
-			'name'                    => _x( 'Instructors', 'Post type general name', 'tribe-ext-instructors-linked-post-type' ),
-			'singular_name'           => _x( 'Instructor', 'Post type singular name', 'tribe-ext-instructors-linked-post-type' ),
-			'singular_name_lowercase' => _x( 'instructor', 'Post type singular name', 'tribe-ext-instructors-linked-post-type' ),
+			'name'                    => esc_html_x( 'Instructors', 'Post type general name', 'tribe-ext-instructors-linked-post-type' ),
+			'singular_name'           => esc_html_x( 'Instructor', 'Post type singular name', 'tribe-ext-instructors-linked-post-type' ),
+			'singular_name_lowercase' => esc_html_x( 'instructor', 'Post type singular name', 'tribe-ext-instructors-linked-post-type' ),
+			// not part of WP's labels but is required by Linked_Posts::register_linked_post_type()
+			'add_new'                 => esc_html_x( 'Add New', $post_type_key, 'tribe-ext-instructors-linked-post-type' ),
+			'add_new_item'            => esc_html__( 'Add New Instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'edit_item'               => esc_html__( 'Edit Instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'new_item'                => esc_html__( 'New Instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'view_item'               => esc_html__( 'View Instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'view_items'              => esc_html__( 'View Instructors', 'tribe-ext-instructors-linked-post-type' ),
+			'search_items'            => esc_html__( 'Search Instructors', 'tribe-ext-instructors-linked-post-type' ),
+			'not_found'               => esc_html__( 'No instructors found', 'tribe-ext-instructors-linked-post-type' ),
+			'not_found_in_trash'      => esc_html__( 'No instructors found in Trash', 'tribe-ext-instructors-linked-post-type' ),
+			'all_items'               => esc_html__( 'All Instructors', 'tribe-ext-instructors-linked-post-type' ),
+			'archives'                => esc_html__( 'Instructor Archives', 'tribe-ext-instructors-linked-post-type' ),
+			'insert_into_item'        => esc_html__( 'Insert into instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'uploaded_to_this_item'   => esc_html__( 'Uploaded to this instructor', 'tribe-ext-instructors-linked-post-type' ),
+			'items_list'              => esc_html__( 'Instructors list', 'tribe-ext-instructors-linked-post-type' ),
+			'items_list_navigation'   => esc_html__( 'Instructors list navigation', 'tribe-ext-instructors-linked-post-type' ),
 		);
 
 		$args = array(
 			'labels'              => $labels,
+			'description'         => esc_html__( 'Instructors linked to Events', 'tribe-ext-instructors-linked-post-type' ),
 			'public'              => true,
 			'exclude_from_search' => true,
 			'publicly_queryable'  => false,
 			'show_in_menu'        => 'edit.php?post_type=' . Tribe__Events__Main::POSTTYPE,
 			'menu_icon'           => 'dashicons-businessman',
-			'map_meta_cap'        => true,
-			'supports'            => array( 'title', 'editor' ),
+			'capability_type'     => $post_type_key,
+			'map_meta_cap'        => true, // must be true for $this->set_our_capabilities() to take effect
+			'supports'            => array(
+				'author',
+				'editor',
+				'excerpt',
+				'revisions',
+				'thumbnail',
+				'title',
+			),
 			'rewrite'             => array(
 				'slug'       => 'instructor',
 				'with_front' => false,
 			),
 		);
 
-		register_post_type( $this->get_post_type_key(), $args );
+		register_post_type( $post_type_key, $args );
+	}
+
+	/**
+	 * Set the initial capabilities for our post type on default roles.
+	 *
+	 * @see Tribe__Events__Capabilities::set_initial_caps()
+	 */
+	public function set_our_capabilities() {
+		$tribe_events_capabilities = new Tribe__Events__Capabilities();
+
+		$roles = array(
+			'administrator',
+			'editor',
+			'author',
+			'contributor',
+			'subscriber',
+		);
+
+		foreach ( $roles as $role ) {
+			$tribe_events_capabilities->register_post_type_caps( $this->get_post_type_key(), $role );
+		}
 	}
 
 	/**
@@ -288,6 +376,20 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	/**
+	 * Filter the linked post name field.
+	 *
+	 * @param string $name Post type name index.
+	 * @param string $post_type Post type.
+	 */
+	public function get_post_type_name_field_index( $name, $post_type ) {
+		if ( $this->get_post_type_key() === $post_type ) {
+			return $this->get_post_type_container_name();
+		}
+
+		return $name;
+	}
+
+	/**
 	 * Build the string used for this linked post type's container name.
 	 *
 	 * @see Tribe__Events__Linked_Posts::get_post_type_container()
@@ -295,7 +397,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @return string
 	 */
 	protected function get_post_type_container_name() {
-		return $this->get_post_type_label( 'singular_name_lowercase' );
+		return esc_attr( $this->get_post_type_label( 'singular_name_lowercase' ) );
 	}
 
 	/**
@@ -329,85 +431,24 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		add_meta_box(
 			$meta_box_id,
 			sprintf( esc_html__( '%s Information', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) ),
-			array(
-				$this,
-				'meta_box',
-			),
+			array( $this, 'meta_box' ),
 			$this->get_post_type_key(),
 			'normal',
 			'high'
 		);
 	}
 
-	protected function get_meta_box_tr_html_for_a_field_label( $custom_field_label ) {
-		$custom_field = $this->get_a_custom_field_key_from_label( $custom_field_label );
-
-		$name = sprintf( '%s[%s][]',
-			$this->get_post_type_container_name(),
-			$custom_field
-		);
-
-		$output = sprintf(
-			'<tr class="linked-post %1$s tribe-linked-type-%1$s-%2$s">
-            <td>
-                <label for="%3$s">%4$s</label>
-            </td>
-            <td>
-                <input id="%3$s" type="text"
-                       name="%5$s"
-                       class="%1$s-%2$s" size="25" value=""/>
-            </td>
-            </tr>',
-			$this->get_post_type_key(),
-			esc_attr( $custom_field_label ),
-			$custom_field,
-			esc_html__( $custom_field_label . ':', 'tribe-ext-instructors-linked-post-type' ),
-			$name
-		);
-
-		return $output;
-	}
+	// TODO Do we need the duplicate detection JS at the bottom of /wp-content/plugins/the-events-calendar/src/admin-views/organizer-meta-box.php
 
 	/**
 	 * Output the template used when editing this post directly via wp-admin
 	 * post editor (not when editing an Event in wp-admin).
-	 *
-	 * Based on /wp-content/plugins/the-events-calendar/src/admin-views/organizer-meta-box.php
 	 */
 	public function meta_box() {
 		global $post;
-		$options = '';
-		$style   = '';
 		$post_id = $post->ID;
-		$saved   = false;
-
-		$post_type_key = $this->get_post_type_key();
-
-		if ( $post_type_key === $post->post_type ) {
-
-			if (
-				( is_admin() && isset( $_GET[ 'post' ] ) && $_GET[ 'post' ] )
-				|| ( ! is_admin() && isset( $post_id ) )
-			) {
-				$saved = true;
-			}
-
-			if ( ! empty( $post_id ) ) {
-
-				if ( $saved ) { //if there is a post AND the post has been saved at least once.
-					$title = apply_filters( 'the_title', $post->post_title, $post->ID );
-				}
-
-				foreach ( $this->get_custom_field_keys() as $tag ) {
-					if ( metadata_exists( 'post', $post_id, $tag ) ) {
-						// heads up: variable variables
-						// https://secure.php.net/manual/en/language.variables.variable.php
-						$$tag = get_post_meta( $post_id, $tag, true );
-					}
-				}
-			}
-		}
 		?>
+
         <style type="text/css">
             #EventInfo-<?php echo $this->get_post_type_key(); ?> {
                 border: none;
@@ -417,12 +458,92 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
             <table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo $this->get_post_type_key(); ?>">
 				<?php
 				foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
-					echo $this->get_meta_box_tr_html_for_a_field_label( $custom_field_label );
+					echo $this->get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id );
 				}
 				?>
             </table>
         </div>
 		<?php
+	}
+
+	protected function get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id = 0 ) {
+		$custom_field = $this->get_a_custom_field_key_from_label( $custom_field_label );
+
+		$post_id = absint( $post_id );
+
+		$value = get_post_meta( $post_id, $custom_field, true );
+
+		if ( false === $value ) {
+			$value = '';
+		}
+
+		$name = sprintf( '%s[%s]',
+			$this->get_post_type_container_name(),
+			$custom_field
+		);
+
+		// We need to put in an array for TEC's data processing but not for custom field meta box on its own post type editing screen
+		$screen = get_current_screen();
+
+		if (
+			empty( $screen->post_type )
+			|| $this->get_post_type_key() !== $screen->post_type
+		) {
+			$name .= '[]';
+		}
+
+		$output = sprintf(
+			'<tr class="linked-post %1$s tribe-linked-type-%1$s-%2$s">
+            <td>
+                <label for="%3$s">%4$s</label>
+            </td>
+            <td>
+                <input id="%3$s" type="text"
+                       name="%5$s"
+                       class="%1$s-%2$s" size="25" value="%6$s"/>
+            </td>
+            </tr>',
+			$this->get_post_type_key(),
+			esc_attr( $custom_field_label ),
+			$custom_field,
+			esc_html__( $custom_field_label . ':', 'tribe-ext-instructors-linked-post-type' ),
+			$name,
+			esc_html( $value )
+		);
+
+		return $output;
+	}
+
+	/**
+	 * Make sure our meta data gets saved.
+	 *
+	 * @see Tribe__Events__Organizer::update()
+	 *
+	 * @param int     $post_id The Post ID.
+	 * @param WP_Post $post The post object.
+	 */
+	public function save_data_from_meta_box( $post_id = null, $post = null ) {
+		// was this submitted from the single post type editor?
+		$post_type_container_name = $this->get_post_type_container_name();
+
+		$post_type_key = $this->get_post_type_key();
+
+		if (
+			empty( $_POST[ 'post_ID' ] )
+			|| $_POST[ 'post_ID' ] != $post_id
+			|| empty( $_POST[ $post_type_container_name ] )
+		) {
+			return;
+		}
+
+		// is the current user allowed to edit this post?
+		if ( ! current_user_can( 'edit_' . $post_type_key, $post_id ) ) {
+			return;
+		}
+
+		$data = stripslashes_deep( $_POST[ $post_type_container_name ] );
+
+		$this->update_existing( $post_id, $data );
 	}
 
 	/**
@@ -498,13 +619,15 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @return mixed
 	 */
 	public function create_new_post( $data, $post_status = 'publish' ) {
+		$name_field_index = $this->get_post_type_container_name();
+
 		if (
-			( isset( $data[ 'name' ] )
-			  && $data[ 'name' ]
+			( isset( $data[ $name_field_index ] )
+			  && $data[ $name_field_index ]
 			)
 			|| $this->has_this_post_types_custom_fields( $data )
 		) {
-			$title   = isset( $data[ 'name' ] ) ? $data[ 'name' ] : sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
+			$title   = isset( $data[ $name_field_index ] ) ? $data[ $name_field_index ] : sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
 			$content = isset( $data[ 'Description' ] ) ? $data[ 'Description' ] : '';
 			$slug    = sanitize_title( $title );
 
@@ -566,10 +689,9 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		// Update existing. Beware of the potential for infinite loops if you hook to 'save_post' (if it aggressively affects all post types) or if you hook to 'save_post_' . $this->get_post_type_key()
 		if ( 1 < count( $args ) ) {
 			$tag = 'save_post_' . $this->get_post_type_key();
-			// TODO
-			//remove_action( $tag, array( tribe( 'tec.main' ), 'save_organizer_data' ), 16 );
+			remove_action( $tag, array( $this, 'save_data_from_meta_box' ), 16 );
 			wp_update_post( $args );
-			//add_action( $tag, array( tribe( 'tec.main' ), 'save_organizer_data' ), 16, 2 );
+			add_action( $tag, array( $this, 'save_data_from_meta_box' ), 16, 2 );
 		}
 
 		// TODO?
@@ -595,6 +717,9 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	public function save_meta( $post_id, $data ) {
 		$our_id = $this->get_post_id_field_name();
 
+		$name_field_index = $this->get_post_type_container_name();
+
+
 		if ( isset( $data[ 'FeaturedImage' ] ) && ! empty( $data[ 'FeaturedImage' ] ) ) {
 			update_post_meta( $post_id, '_thumbnail_id', $data[ 'FeaturedImage' ] );
 			unset( $data[ 'FeaturedImage' ] );
@@ -608,10 +733,11 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		 *
 		 * @see Tribe__Events__Linked_Posts::get_post_type_name_field_index()
 		 */
-		unset( $data[ 'name' ] );
+		unset( $data[ $name_field_index ] );
 
-		foreach ( $data as $key => $var ) {
-			update_post_meta( $post_id, $key, sanitize_text_field( $var ) );
+		foreach ( $data as $meta_key => $meta_value ) {
+			$meta_value = $this->sanitize_a_custom_fields_value( $meta_key, $meta_value );
+			update_post_meta( $post_id, $meta_key, sanitize_text_field( $meta_value ) );
 		}
 	}
 
