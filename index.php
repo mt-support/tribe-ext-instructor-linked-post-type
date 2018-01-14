@@ -78,7 +78,9 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		add_action( 'admin_menu', array( $this, 'add_meta_box_to_event_editing' ) );
 		add_action( 'save_post_' . $this->get_post_type_key(), array( $this, 'save_data_from_meta_box' ), 16, 2 );
 
-		// TODO
+		add_action( 'wp_head', array( $this, 'our_custom_css' ) );
+
+		// TODO: Choose your desired action hook.
 		add_action( 'tribe_events_single_event_after_the_meta', array( $this, 'output_linked_posts' ) );
 	}
 
@@ -283,7 +285,6 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 			'description'         => esc_html__( 'Instructors linked to Events', 'tribe-ext-instructors-linked-post-type' ),
 			'public'              => true,
 			'exclude_from_search' => true,
-			'publicly_queryable'  => false,
 			'show_in_menu'        => 'edit.php?post_type=' . Tribe__Events__Main::POSTTYPE,
 			'menu_icon'           => 'dashicons-businessman',
 			'capability_type'     => $post_type_key,
@@ -467,11 +468,11 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	protected function get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id = 0 ) {
-		$custom_field = $this->get_a_custom_field_key_from_label( $custom_field_label );
+		$custom_field_key = $this->get_a_custom_field_key_from_label( $custom_field_label );
 
 		$post_id = absint( $post_id );
 
-		$value = get_post_meta( $post_id, $custom_field, true );
+		$value = get_post_meta( $post_id, $custom_field_key, true );
 
 		if ( false === $value ) {
 			$value = '';
@@ -479,7 +480,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 		$name = sprintf( '%s[%s]',
 			$this->get_post_type_container_name(),
-			$custom_field
+			$custom_field_key
 		);
 
 		// We need to put in an array for TEC's data processing but not for custom field meta box on its own post type editing screen
@@ -505,7 +506,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
             </tr>',
 			$this->get_post_type_key(),
 			esc_attr( $custom_field_label ),
-			$custom_field,
+			$custom_field_key,
 			esc_html__( $custom_field_label . ':', 'tribe-ext-instructors-linked-post-type' ),
 			$name,
 			esc_html( $value )
@@ -741,20 +742,138 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		}
 	}
 
+	/**
+	 * Get a post's HTML output for all of its custom fields.
+	 *
+	 * Used for the Event Single Page meta display.
+	 *
+	 * @param int $post_id
+	 *
+	 * @return string
+	 */
+	private function get_event_single_custom_fields_output( $post_id = 0 ) {
+		$post_id = absint( $post_id );
+
+		$output = '';
+
+		if ( empty( $post_id ) ) {
+			return $output;
+		}
+
+		foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
+			$custom_field_key = $this->get_a_custom_field_key_from_label( $custom_field_label );
+
+			$value = get_post_meta( $post_id, $custom_field_key, true );
+
+			if (
+				false === $value
+				|| '' === $value
+			) {
+				continue;
+			}
+
+			// Build the HTML markup applicable to each field.
+			// By default use esc_html(), but we can't do that for all uses of $value because we already have our desired HTML (with escaped values).
+			if ( 'Website' == $custom_field_label ) {
+				$value = esc_url( $value );
+
+				if ( empty( $value ) ) {
+					continue;
+				}
+
+				$value = sprintf( '<a href="%1$s">%1$s</a>', $value );
+			} elseif ( 'Email Address' == $custom_field_label ) {
+				$value = antispambot( $value );
+
+				if ( empty( $value ) ) {
+					continue;
+				}
+
+				$email_link = sprintf( 'mailto:%s', $value );
+
+				$value = sprintf( '<a href="%s">%s</a>', esc_url( $email_link, array( 'mailto' ) ), esc_html( $value ) );
+			} else {
+				$value = esc_html( $value );
+			}
+
+			$output .= sprintf(
+				'<dt>%s:</dt><dd class="%s-%s">%s</dd>',
+				esc_html( $custom_field_label ),
+				esc_attr( $this->get_post_type_key() ),
+				esc_attr( strtolower( $custom_field_label ) ),
+				$value
+			);
+		}
+
+		return $output;
+	}
+
 	public function output_linked_posts() {
 		$output = '';
+
+		$post_type_key = esc_attr( $this->get_post_type_key() );
 
 		$linked_posts = tribe_get_linked_posts_by_post_type( get_the_ID(), $this->get_post_type_key() );
 
 		if ( ! empty( $linked_posts ) ) {
-			$output .= sprintf( '<div class="%s">', $this->get_post_type_key() );
+			$output .= sprintf(
+				'<div class="tribe-linked-type-%s tribe-events-event-meta tribe-clearfix">
+                <div class="tribe-events-meta-group">
+                <h3 class="tribe-events-single-section-title">%s</h3>
+                <div class="all-linked-%s">',
+				$post_type_key,
+				$this->get_post_type_label(),
+                $this->get_post_type_key()
+			);
+
 			foreach ( $linked_posts as $post ) {
-				$output .= sprintf( '<div>%s</div>', $post->post_title );
+				$post_id = $post->ID;
+
+				$output .= sprintf(
+					'<dl class="single-%1$s post-id-%2$d">
+                        <dd class="single-%1$s-title">
+                            <a href="%3$s" title="%4$s">%5$s</a>
+                        </dd>
+                        %6$s
+                    </dl>', // featured image, each custom field
+					$post_type_key,
+					esc_attr( $post_id ),
+					esc_url( get_permalink( $post_id ) ),
+					esc_attr( get_the_title( $post_id ) ),
+					esc_html( get_the_title( $post_id ) ),
+					$this->get_event_single_custom_fields_output( $post_id )
+				);
 			}
-			$output .= '</div>';
+
+			$output .= '</div></div></div>';
 		}
 
 		echo $output;
+	}
+
+	public function our_custom_css() {
+	    $post_type_key = $this->get_post_type_key();
+
+	    $container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', $post_type_key );
+
+	    $parent_selector = sprintf( '.single-tribe_events .all-linked-%s', $post_type_key );
+		?>
+
+        <style type="text/css">
+            <?php echo $container_selector; ?> {
+                width: 100%;
+            }
+            <?php echo $parent_selector; ?> {
+                display: flex;
+                flex-wrap: wrap;
+                align-content: space-between;
+            }
+            <?php echo $parent_selector; ?> > dl {
+                flex: 0 0 20%;
+            }
+        </style>
+
+		<?php
 	}
 
 }
