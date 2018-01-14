@@ -504,20 +504,20 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		$post_id = $post->ID;
 		?>
 
-        <style type="text/css">
-            #EventInfo-<?php echo $this->get_post_type_key(); ?> {
-                border: none;
-            }
-        </style>
-        <div id='eventDetails-<?php echo $this->get_post_type_key(); ?>' class="inside eventForm">
-            <table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo $this->get_post_type_key(); ?>">
+		<style type="text/css">
+			#EventInfo-<?php echo $this->get_post_type_key(); ?> {
+				border: none;
+			}
+		</style>
+		<div id='eventDetails-<?php echo $this->get_post_type_key(); ?>' class="inside eventForm">
+			<table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo $this->get_post_type_key(); ?>">
 				<?php
 				foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
 					echo $this->get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id );
 				}
 				?>
-            </table>
-        </div>
+			</table>
+		</div>
 		<?php
 	}
 
@@ -550,12 +550,12 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		$output = sprintf(
 			'<tr class="linked-post %1$s tribe-linked-type-%1$s-%2$s">
             <td>
-                <label for="%3$s">%4$s</label>
+            <label for="%3$s">%4$s</label>
             </td>
             <td>
-                <input id="%3$s" type="text"
-                       name="%5$s"
-                       class="%1$s-%2$s" size="25" value="%6$s"/>
+            <input id="%3$s" type="text"
+                name="%5$s"
+                class="%1$s-%2$s" size="25" value="%6$s"/>
             </td>
             </tr>',
 			$this->get_post_type_key(),
@@ -682,8 +682,8 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 			)
 			|| $this->has_this_post_types_custom_fields( $data )
 		) {
-			$title   = isset( $data[ $name_field_index ] ) ? $data[ $name_field_index ] : sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
-			$content = isset( $data[ 'Description' ] ) ? $data[ 'Description' ] : '';
+			$title   = isset( $data[ $name_field_index ] ) ? $data[ $name_field_index ]:sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
+			$content = isset( $data[ 'Description' ] ) ? $data[ 'Description' ]:'';
 			$slug    = sanitize_title( $title );
 
 			$data = new Tribe__Data( $data );
@@ -877,19 +877,20 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
                 <div class="all-linked-%s">',
 				$post_type_key,
 				$this->get_post_type_label(),
-                $this->get_post_type_key()
+				$this->get_post_type_key()
 			);
 
 			foreach ( $linked_posts as $post ) {
 				$post_id = $post->ID;
 
+				// TODO: featured image?
 				$output .= sprintf(
 					'<dl class="single-%1$s post-id-%2$d">
-                        <dd class="single-%1$s-title">
-                            <a href="%3$s" title="%4$s">%5$s</a>
-                        </dd>
-                        %6$s
-                    </dl>', // featured image, each custom field
+                    <dd class="single-%1$s-title">
+                    <a href="%3$s" title="%4$s">%5$s</a>
+                    </dd>
+                    %6$s
+                    </dl>',
 					$post_type_key,
 					esc_attr( $post_id ),
 					esc_url( get_permalink( $post_id ) ),
@@ -906,26 +907,27 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	public function our_custom_css() {
-	    $post_type_key = $this->get_post_type_key();
+		$post_type_key = $this->get_post_type_key();
 
-	    $container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', $post_type_key );
+		$container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', $post_type_key );
 
-	    $parent_selector = sprintf( '.single-tribe_events .all-linked-%s', $post_type_key );
+		$parent_selector = sprintf( '.single-tribe_events .all-linked-%s', $post_type_key );
 		?>
 
-        <style type="text/css">
-            <?php echo $container_selector; ?> {
-                width: 100%;
-            }
-            <?php echo $parent_selector; ?> {
-                display: flex;
-                flex-wrap: wrap;
-                align-content: space-between;
-            }
-            <?php echo $parent_selector; ?> > dl {
-                flex: 0 0 20%;
-            }
-        </style>
+		<style type="text/css">
+			<?php echo $container_selector; ?> {
+				width: 100%;
+			}
+			<?php echo $parent_selector; ?> {
+				display: flex;
+				flex-wrap: wrap;
+				align-content: space-between;
+			}
+			<?php echo $parent_selector; ?> > dl {
+				min-width: 200px;
+				flex: 0 0 20%;
+			}
+		</style>
 
 		<?php
 	}
