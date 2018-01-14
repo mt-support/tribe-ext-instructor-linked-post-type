@@ -59,6 +59,18 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
 		$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
 		$this->set_url( 'https://theeventscalendar.com/knowledgebase/abstract-post-types/' );
+
+		/**
+		 * Ideally, we would only flush rewrite rules on plugin activation and
+		 * deactivation, but we cannot on activation due to the way extensions
+		 * get loaded. Therefore, we flush rewrite rules a different way while
+		 * plugin is activated. The deactivation hook does work inside the
+		 * extension class, though.
+		 *
+		 * @link https://developer.wordpress.org/reference/functions/flush_rewrite_rules/#comment-597
+		 */
+		add_action( 'admin_init', array( $this, 'admin_flush_rewrite_rules_if_needed' ) );
+		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 	}
 
 	/**
@@ -82,6 +94,48 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 		// TODO: Choose your desired action hook.
 		add_action( 'tribe_events_single_event_after_the_meta', array( $this, 'output_linked_posts' ) );
+	}
+
+	/**
+	 * Ideally, we would only flush rewrite rules on plugin activation, but we
+	 * cannot use register_activation_hook() due to the timing of when
+	 * extensions load. Therefore, we flush rewrite rules on every visit to the
+	 * wp-admin Plugins screen (where we'd expect you to be if you just
+	 * activated a plugin)... only if our custom post type key is not one of the
+	 * rewrite rules.
+	 *
+	 * This sort of checking won't catch situations where you modify the args
+	 * sent to register_post_type() in a way that would require a refresh to
+	 * the rewrite rules... after we already added the rewrite rules.
+	 * In this case, just visit your wp-admin Permalinks settings and you
+	 * should be good-to-go.
+	 */
+	public function admin_flush_rewrite_rules_if_needed() {
+		global $pagenow;
+
+		if ( 'plugins.php' !== $pagenow ) {
+			return;
+		}
+
+		$rewrite_rules = get_option( 'rewrite_rules' );
+
+		if ( empty( $rewrite_rules ) ) {
+			return;
+		}
+
+		$need_refresh = true;
+
+		// search all the rewrite rules for our custom post type key and if one is found, bail out without refreshing Permalinks
+		foreach ( $rewrite_rules as $rule ) {
+			if ( false !== strpos( $rule, $this->get_post_type_key() ) ) {
+				$need_refresh = false;
+				break;
+			}
+		}
+
+		if ( $need_refresh ) {
+			flush_rewrite_rules();
+		}
 	}
 
 	/**
