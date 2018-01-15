@@ -20,9 +20,9 @@ if ( ! class_exists( 'Tribe__Extension' ) ) {
  * TODO: How to Fork this...
  * Find all mentions of "instructor" and "instructors", including the name of this plugin directory and this file's class name.
  * Then, replace with your own post type and register_post_type() arguments as appropriate for your project.
+ * Update this directory's single.php (which is based on /wp-content/plugins/events-calendar-pro/src/views/pro/single-organizer.php) to account for proper mentions of your custom post type and its labels.
  * And add your own custom fields -- see $this->get_custom_field_labels()
  * Test everything is working as desired, including saving of meta data and customizing how it outputs to the Single Events Page.
- * You might also want to build a single-{post_type}.php similar to /wp-content/plugins/events-calendar-pro/src/views/pro/single-organizer.php
  * @link https://developer.wordpress.org/themes/template-files-section/custom-post-type-template-files/
  */
 
@@ -40,7 +40,7 @@ if ( ! function_exists( 'tribe_is_event_instructors' ) ) {
 
 		$tribe_is_event_instructors = ! empty( $wp_query->tribe_is_event_instructors );
 
-		return apply_filters( 'tribe_query_is_event_instructors', $tribe_is_event_instructors );
+		return apply_filters( 'tribe_ext_query_is_event_instructors', $tribe_is_event_instructors );
 	}
 }
 
@@ -48,6 +48,18 @@ if ( ! function_exists( 'tribe_is_event_instructors' ) ) {
  * Extension main class, class begins loading on init() function.
  */
 class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
+
+	/**
+	 * Our post type's key.
+	 *
+	 * Must not exceed 20 characters and may only contain lowercase alphanumeric
+	 * characters, dashes, and underscores.
+     *
+	 * @see sanitize_key()
+	 *
+	 * @return string
+	 */
+    const POST_TYPE_KEY = 'tec_instructor';
 
 	/**
 	 * Setup the Extension's properties.
@@ -85,15 +97,18 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		add_filter( 'tribe_events_linked_post_name_field_index', array( $this, 'get_post_type_name_field_index' ), 10, 2 );
 		add_filter( 'tribe_events_linked_post_type_container', array( $this, 'linked_post_type_container' ), 10, 2 );
 		add_action( 'tribe_events_linked_post_new_form', array( $this, 'event_edit_form_create_fields' ) );
-		add_action( 'tribe_events_linked_post_create_' . $this->get_post_type_key(), array( $this, 'event_edit_form_save_data' ), 10, 5 );
-		add_filter( 'tribe_events_linked_post_meta_values__tribe_linked_post_' . $this->get_post_type_key(), array( $this, 'filter_out_invalid_post_ids' ) );
+		add_action( 'tribe_events_linked_post_create_' . self::POST_TYPE_KEY, array( $this, 'event_edit_form_save_data' ), 10, 5 );
+		add_filter( 'tribe_events_linked_post_meta_values__tribe_linked_post_' . self::POST_TYPE_KEY, array( $this, 'filter_out_invalid_post_ids' ) );
 		add_action( 'admin_menu', array( $this, 'add_meta_box_to_event_editing' ) );
-		add_action( 'save_post_' . $this->get_post_type_key(), array( $this, 'save_data_from_meta_box' ), 16, 2 );
+		add_action( 'save_post_' . self::POST_TYPE_KEY, array( $this, 'save_data_from_meta_box' ), 16, 2 );
 
 		add_action( 'wp_head', array( $this, 'our_custom_css' ) );
 
 		// TODO: Choose your desired action hook.
 		add_action( 'tribe_events_single_event_after_the_meta', array( $this, 'output_linked_posts' ) );
+
+		// TODO: Edit your template file, which is loaded via this filter.
+		add_filter( 'single_template', array( $this, 'template_for_our_single_post' ) );
 	}
 
 	/**
@@ -127,7 +142,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 		// search all the rewrite rules for our custom post type key and if one is found, bail out without refreshing Permalinks
 		foreach ( $rewrite_rules as $rule ) {
-			if ( false !== strpos( $rule, $this->get_post_type_key() ) ) {
+			if ( false !== strpos( $rule, self::POST_TYPE_KEY ) ) {
 				$need_refresh = false;
 				break;
 			}
@@ -239,7 +254,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	protected function get_a_custom_field_key_from_label( $label, $prepend_underscore = true ) {
 		$label = preg_replace( '/[-\s]/', '_', $label );
 
-		$label = sprintf( '%s_%s', $this->get_post_type_key(), $label );
+		$label = sprintf( '%s_%s', self::POST_TYPE_KEY, $label );
 
 		if ( ! empty( $prepend_underscore ) ) {
 			$label = sprintf( '_%s', $label );
@@ -273,20 +288,6 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	/**
-	 * Our post type's key.
-	 *
-	 * Must not exceed 20 characters and may only contain lowercase alphanumeric
-	 * characters, dashes, and underscores.
-	 *
-	 * @see sanitize_key()
-	 *
-	 * @return string
-	 */
-	protected function get_post_type_key() {
-		return 'tec_instructor';
-	}
-
-	/**
 	 * Get our post type's label ('name' by default, which is capitalized and plural).
 	 *
 	 * @param $label string Any defined label key for our post type.
@@ -294,7 +295,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @return string
 	 */
 	protected function get_post_type_label( $label = 'name' ) {
-		$post_type_object = get_post_type_object( $this->get_post_type_key() );
+		$post_type_object = get_post_type_object( self::POST_TYPE_KEY );
 
 		$result = $post_type_object->labels->$label;
 
@@ -310,7 +311,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @see Linked_Posts::register_linked_post_type()
 	 */
 	public function register_our_post_type() {
-		$post_type_key = $this->get_post_type_key();
+		$post_type_key = self::POST_TYPE_KEY;
 
 		$labels = array(
 			'name'                    => esc_html_x( 'Instructors', 'Post type general name', 'tribe-ext-instructors-linked-post-type' ),
@@ -377,7 +378,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		);
 
 		foreach ( $roles as $role ) {
-			$tribe_events_capabilities->register_post_type_caps( $this->get_post_type_key(), $role );
+			$tribe_events_capabilities->register_post_type_caps( self::POST_TYPE_KEY, $role );
 		}
 	}
 
@@ -393,7 +394,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @return array
 	 */
 	public function filter_linked_post_type_args( $args, $post_type ) {
-		if ( $this->get_post_type_key() !== $post_type ) {
+		if ( self::POST_TYPE_KEY !== $post_type ) {
 			return $args;
 		}
 
@@ -423,7 +424,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @param string $post_type Post type of linked post
 	 */
 	public function linked_post_id_field_index( $id_field, $post_type ) {
-		if ( $this->get_post_type_key() === $post_type ) {
+		if ( self::POST_TYPE_KEY === $post_type ) {
 			return $this->get_post_id_field_name();
 		}
 
@@ -437,7 +438,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @param string $post_type Post type.
 	 */
 	public function get_post_type_name_field_index( $name, $post_type ) {
-		if ( $this->get_post_type_key() === $post_type ) {
+		if ( self::POST_TYPE_KEY === $post_type ) {
 			return $this->get_post_type_container_name();
 		}
 
@@ -464,7 +465,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @param string $post_type Post type of linked post
 	 */
 	public function linked_post_type_container( $container, $post_type ) {
-		if ( $this->get_post_type_key() === $post_type ) {
+		if ( self::POST_TYPE_KEY === $post_type ) {
 			return $this->get_post_type_container_name();
 		}
 
@@ -473,7 +474,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 	public function link_post_type_to_events() {
 		if ( function_exists( 'tribe_register_linked_post_type' ) ) {
-			tribe_register_linked_post_type( $this->get_post_type_key() );
+			tribe_register_linked_post_type( self::POST_TYPE_KEY );
 		}
 	}
 
@@ -481,13 +482,13 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * Callback for adding the Meta box to the admin page
 	 */
 	public function add_meta_box_to_event_editing() {
-		$meta_box_id = sprintf( 'tribe_events_%s_details', $this->get_post_type_key() );
+		$meta_box_id = sprintf( 'tribe_events_%s_details', self::POST_TYPE_KEY );
 
 		add_meta_box(
 			$meta_box_id,
 			sprintf( esc_html__( '%s Information', 'tribe-ext-instructors-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) ),
 			array( $this, 'meta_box' ),
-			$this->get_post_type_key(),
+			self::POST_TYPE_KEY,
 			'normal',
 			'high'
 		);
@@ -505,12 +506,12 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		?>
 
 		<style type="text/css">
-			#EventInfo-<?php echo $this->get_post_type_key(); ?> {
+			#EventInfo-<?php echo self::POST_TYPE_KEY; ?> {
 				border: none;
 			}
 		</style>
-		<div id='eventDetails-<?php echo $this->get_post_type_key(); ?>' class="inside eventForm">
-			<table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo $this->get_post_type_key(); ?>">
+		<div id='eventDetails-<?php echo self::POST_TYPE_KEY; ?>' class="inside eventForm">
+			<table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo self::POST_TYPE_KEY; ?>">
 				<?php
 				foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
 					echo $this->get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id );
@@ -542,7 +543,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 		if (
 			empty( $screen->post_type )
-			|| $this->get_post_type_key() !== $screen->post_type
+			|| self::POST_TYPE_KEY !== $screen->post_type
 		) {
 			$name .= '[]';
 		}
@@ -558,7 +559,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
                 class="%1$s-%2$s" size="25" value="%6$s"/>
             </td>
             </tr>',
-			$this->get_post_type_key(),
+			self::POST_TYPE_KEY,
 			esc_attr( $custom_field_label ),
 			$custom_field_key,
 			esc_html__( $custom_field_label . ':', 'tribe-ext-instructors-linked-post-type' ),
@@ -581,7 +582,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 		// was this submitted from the single post type editor?
 		$post_type_container_name = $this->get_post_type_container_name();
 
-		$post_type_key = $this->get_post_type_key();
+		$post_type_key = self::POST_TYPE_KEY;
 
 		if (
 			empty( $_POST[ 'post_ID' ] )
@@ -611,7 +612,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 * @param string $post_type The post type that is being modified.
 	 */
 	public function event_edit_form_create_fields( $post_type ) {
-		$post_type_key = $this->get_post_type_key();
+		$post_type_key = self::POST_TYPE_KEY;
 
 		// We only want to affect our own post type; bail if it's some other post type.
 		if ( $post_type_key !== $post_type ) {
@@ -696,7 +697,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 				'post_title'    => $title,
 				'post_content'  => $content,
 				'post_name'     => $slug,
-				'post_type'     => $this->get_post_type_key(),
+				'post_type'     => self::POST_TYPE_KEY,
 				'post_status'   => Tribe__Utils__Array::get( $data, 'post_status', $post_status ),
 				'post_author'   => $data[ 'post_author' ],
 				'post_date'     => $data[ 'post_date' ],
@@ -741,9 +742,9 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 			'post_status'   => $data[ 'post_status' ],
 		) );
 
-		// Update existing. Beware of the potential for infinite loops if you hook to 'save_post' (if it aggressively affects all post types) or if you hook to 'save_post_' . $this->get_post_type_key()
+		// Update existing. Beware of the potential for infinite loops if you hook to 'save_post' (if it aggressively affects all post types) or if you hook to 'save_post_' . self::POST_TYPE_KEY
 		if ( 1 < count( $args ) ) {
-			$tag = 'save_post_' . $this->get_post_type_key();
+			$tag = 'save_post_' . self::POST_TYPE_KEY;
 			remove_action( $tag, array( $this, 'save_data_from_meta_box' ), 16 );
 			wp_update_post( $args );
 			add_action( $tag, array( $this, 'save_data_from_meta_box' ), 16, 2 );
@@ -805,7 +806,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	 *
 	 * @return string
 	 */
-	private function get_event_single_custom_fields_output( $post_id = 0 ) {
+	public function get_event_single_custom_fields_output( $post_id = 0 ) {
 		$post_id = absint( $post_id );
 
 		$output = '';
@@ -853,7 +854,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 			$output .= sprintf(
 				'<dt>%s:</dt><dd class="%s-%s">%s</dd>',
 				esc_html( $custom_field_label ),
-				esc_attr( $this->get_post_type_key() ),
+				esc_attr( self::POST_TYPE_KEY ),
 				esc_attr( strtolower( $custom_field_label ) ),
 				$value
 			);
@@ -865,9 +866,9 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	public function output_linked_posts() {
 		$output = '';
 
-		$post_type_key = esc_attr( $this->get_post_type_key() );
+		$post_type_key = esc_attr( self::POST_TYPE_KEY );
 
-		$linked_posts = tribe_get_linked_posts_by_post_type( get_the_ID(), $this->get_post_type_key() );
+		$linked_posts = tribe_get_linked_posts_by_post_type( get_the_ID(), self::POST_TYPE_KEY );
 
 		if ( ! empty( $linked_posts ) ) {
 			$output .= sprintf(
@@ -877,7 +878,7 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
                 <div class="all-linked-%s">',
 				$post_type_key,
 				$this->get_post_type_label(),
-				$this->get_post_type_key()
+				self::POST_TYPE_KEY
 			);
 
 			foreach ( $linked_posts as $post ) {
@@ -907,7 +908,15 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 	}
 
 	public function our_custom_css() {
-		$post_type_key = $this->get_post_type_key();
+	    // Only target Single Event pages
+	    if (
+		    ! class_exists( 'Tribe__Events__Main' )
+		    || ! is_singular( Tribe__Events__Main::POSTTYPE )
+        ) {
+	        return;
+        }
+
+		$post_type_key = self::POST_TYPE_KEY;
 
 		$container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', $post_type_key );
 
@@ -931,5 +940,35 @@ class Tribe__Extension__Instructors_Linked_Post_Type extends Tribe__Extension {
 
 		<?php
 	}
+
+	public function template_for_our_single_post( $template ) {
+		if ( is_singular( self::POST_TYPE_KEY ) ) {
+			$template = dirname(__FILE__) . '/single.php';
+		}
+
+		return $template;
+	}
+
+	/**
+	 * Output the upcoming events associated with one of our posts.
+     * 
+     * @see tribe_organizer_upcoming_events()
+	 */
+	public function get_upcoming_events( $post_id = false ) {
+		$post_id = Tribe__Events__Main::postIdHelper( $post_id );
+
+		if ( $post_id ) {
+			$args = array(
+				'instructor'      => $post_id,
+				'eventDisplay'   => 'list',
+				'posts_per_page' => apply_filters( 'tribe_ext_events_single_' . self::POST_TYPE_KEY . '_posts_per_page', 100 ),
+			);
+
+			$html = tribe_include_view_list( $args );
+
+			return apply_filters( 'tribe_ext_' . self::POST_TYPE_KEY . '_upcoming_events', $html );
+		}
+	}
+
 
 }
