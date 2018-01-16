@@ -6,15 +6,15 @@
  *
  * This view is based on /wp-content/plugins/events-calendar-pro/src/views/pro/single-organizer.php
  *
- * This template can be copied to [your-active-child-theme]/tribe-events/tec_instructor/single.php and then customized
+ * This template can be copied to [your-active-child-theme]/tribe-events/tribe_ext_instructor/single.php and then customized
  */
 
 // Do not allow loading directly or in an unexpected manner.
-if ( ! class_exists( 'Tribe__Extension__Instructors_Linked_Post_Type' ) ) {
+if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 	return;
 }
 
-$extension_instance = Tribe__Extension__Instructors_Linked_Post_Type::instance();
+$extension_instance = Tribe__Extension__Instructor_Linked_Post_Type::instance();
 
 global $post;
 
@@ -27,7 +27,7 @@ $post_type_key = $post->post_type;
 	<div class="tribe-events-<?php echo $post_type_key; ?>">
 		<p class="tribe-events-back">
 			<a href="<?php echo esc_url( tribe_get_events_link() ); ?>"
-			   rel="bookmark"><?php printf( __( '&larr; Back to %s', 'tribe-ext-instructors-linked-post-type' ), tribe_get_event_label_plural() ); ?></a>
+			   rel="bookmark"><?php printf( __( '&larr; Back to %s', 'tribe-ext-instructor-linked-post-type' ), tribe_get_event_label_plural() ); ?></a>
 		</p>
 
 		<?php do_action( 'tribe_events_single_' . $post_type_key . '_before_item' ) ?>
@@ -68,7 +68,7 @@ $post_type_key = $post->post_type;
 
 		<?php do_action( 'tribe_events_single_' . $post_type_key . '_after_upcoming_events' ) ?>
 
-	</div><!-- .tribe-events-tec_instructor -->
+	</div><!-- .tribe-events-tribe_ext_instructor -->
 	<?php
 	do_action( 'tribe_events_single_' . $post_type_key . '_after_template' );
 endwhile;
