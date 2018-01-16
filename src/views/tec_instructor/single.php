@@ -5,6 +5,8 @@
  * events that occur with the specified instructor.
  *
  * This view is based on /wp-content/plugins/events-calendar-pro/src/views/pro/single-organizer.php
+ *
+ * This template can be copied to [your-active-child-theme]/tribe-events/tec_instructor/single.php and then customized
  */
 
 // Do not allow loading directly or in an unexpected manner.

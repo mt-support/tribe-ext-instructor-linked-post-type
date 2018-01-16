@@ -18,7 +18,10 @@ if ( ! class_exists( 'Tribe__Extension' ) ) {
 
 /**
  * TODO: How to Fork this...
- * Find all mentions of "instructor" and "instructors", including the name of this plugin directory, the name of this directory's sub-folders (src/views/RENAME_THIS/single.php), the content of this single.php, and this file's class name.
+ * Find all mentions of "instructor" and "instructors", including the following:
+	 * The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
+	 * The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
+	 * This file's class name
  * Then, replace with your own post type and register_post_type() arguments as appropriate for your project.
  * And add your own custom fields -- see $this->get_custom_field_labels()
  * Check all other "TODO" notes throughout this file
@@ -343,7 +346,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructors_Linked_Post_Type' ) ) {
 				'search_items'            => esc_html__( 'Search Instructors', 'tribe-ext-instructors-linked-post-type' ),
 				'not_found'               => esc_html__( 'No instructors found', 'tribe-ext-instructors-linked-post-type' ),
 				'not_found_in_trash'      => esc_html__( 'No instructors found in Trash', 'tribe-ext-instructors-linked-post-type' ),
-				'all_items'               => esc_html__( 'All Instructors', 'tribe-ext-instructors-linked-post-type' ),
+				'all_items'               => esc_html__( 'Instructors', 'tribe-ext-instructors-linked-post-type' ),
 				'archives'                => esc_html__( 'Instructor Archives', 'tribe-ext-instructors-linked-post-type' ),
 				'insert_into_item'        => esc_html__( 'Insert into instructor', 'tribe-ext-instructors-linked-post-type' ),
 				'uploaded_to_this_item'   => esc_html__( 'Uploaded to this instructor', 'tribe-ext-instructors-linked-post-type' ),
