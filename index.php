@@ -19,9 +19,9 @@ if ( ! class_exists( 'Tribe__Extension' ) ) {
 /**
  * TODO: How to Fork this...
  * Find and replace (case-sensitive) all mentions of "instructor" and "instructors", including the following:
-	 * The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
-	 * The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
-	 * This file's class name
+ *** The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
+ *** The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
+ *** This file's class name
  * Then, replace with your own post type and register_post_type() arguments as appropriate for your project.
  * And add your own custom fields -- see $this->get_custom_field_labels()
  * Check all other "TODO" notes throughout this file
@@ -100,16 +100,16 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		public function init() {
 			add_action( 'init', array( $this, 'register_our_post_type' ) );
 			add_action( 'init', array( $this, 'link_post_type_to_events' ) );
-            add_action( 'wp_loaded', array( $this, 'set_our_capabilities' ) );
-            add_filter( 'tribe_events_linked_post_type_args', array( $this, 'filter_linked_post_type_args' ), 10, 2 );
-            add_filter( 'tribe_events_linked_post_id_field_index', array( $this, 'linked_post_id_field_index' ), 10, 2 );
-            add_filter( 'tribe_events_linked_post_name_field_index', array( $this, 'get_post_type_name_field_index' ), 10, 2 );
-            add_filter( 'tribe_events_linked_post_type_container', array( $this, 'linked_post_type_container' ), 10, 2 );
-            add_action( 'tribe_events_linked_post_new_form', array( $this, 'event_edit_form_create_fields' ) );
-            add_action( 'tribe_events_linked_post_create_' . self::POST_TYPE_KEY, array( $this, 'event_edit_form_save_data' ), 10, 5 );
-            add_filter( 'tribe_events_linked_post_meta_values_' . $this->get_linked_post_type_custom_field_key(), array( $this, 'filter_out_invalid_post_ids' ) );
-            add_action( 'admin_menu', array( $this, 'add_meta_box_to_event_editing' ) );
-            add_action( 'save_post_' . self::POST_TYPE_KEY, array( $this, 'save_data_from_meta_box' ), 16, 2 );
+			add_action( 'wp_loaded', array( $this, 'set_our_capabilities' ) );
+			add_filter( 'tribe_events_linked_post_type_args', array( $this, 'filter_linked_post_type_args' ), 10, 2 );
+			add_filter( 'tribe_events_linked_post_id_field_index', array( $this, 'linked_post_id_field_index' ), 10, 2 );
+			add_filter( 'tribe_events_linked_post_name_field_index', array( $this, 'get_post_type_name_field_index' ), 10, 2 );
+			add_filter( 'tribe_events_linked_post_type_container', array( $this, 'linked_post_type_container' ), 10, 2 );
+			add_action( 'tribe_events_linked_post_new_form', array( $this, 'event_edit_form_create_fields' ) );
+			add_action( 'tribe_events_linked_post_create_' . self::POST_TYPE_KEY, array( $this, 'event_edit_form_save_data' ), 10, 5 );
+			add_filter( 'tribe_events_linked_post_meta_values_' . $this->get_linked_post_type_custom_field_key(), array( $this, 'filter_out_invalid_post_ids' ) );
+			add_action( 'admin_menu', array( $this, 'add_meta_box_to_event_editing' ) );
+			add_action( 'save_post_' . self::POST_TYPE_KEY, array( $this, 'save_data_from_meta_box' ), 16, 2 );
 
 			add_action( 'wp_head', array( $this, 'single_events_custom_css' ) );
 
@@ -118,15 +118,22 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			add_filter( 'tribe_events_template_paths', array( $this, 'template_paths' ) );
 			add_filter( 'tribe_events_current_view_template', array( $this, 'set_current_view_template' ) );
 
+			// Single Instructor page: Handling the No Events Found situation.
+			// We followed how the Tribe__Events__Template_Factory class does it.
+			// cleanup after view (reset query, etc)
+			add_action( 'tribe_events_after_view', array( $this, 'shutdown_view' ) );
+			// set notices
+			add_action( 'tribe_events_before_view', array( $this, 'set_notices' ), 15 );
+
 			/**
 			 * TODO: Leave this as-is or choose a different action hook.
-             * If you change it to use the
-             * `tribe_events_single_event_after_the_meta`
-             * hook, it will be its own separate meta box below the main one or
-             * the venue one (depending on if there's a map displayed in its
-             * own meta box). If you do change to its own meta box, you will
-             * want to add the `tribe-events-event-meta` class to the output's
-             * outermost/container div.
+			 * If you change it to use the
+			 * `tribe_events_single_event_after_the_meta`
+			 * hook, it will be its own separate meta box below the main one or
+			 * the venue one (depending on if there's a map displayed in its
+			 * own meta box). If you do change to its own meta box, you will
+			 * want to add the `tribe-events-event-meta` class to the output's
+			 * outermost/container div.
 			 */
 			add_action( 'tribe_events_single_event_meta_primary_section_end', array( $this, 'output_linked_posts' ) );
 		}
@@ -992,7 +999,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		}
 
 		/**
-		 *
+		 * Set our post type key in the query. Also hook things that need to
+		 * be hooked during this detecting and setting.
 		 *
 		 * @see tribe_is_event_query()
 		 *
@@ -1004,6 +1012,15 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			// Cannot use is_singular() within parse_query (which runs before pre_get_posts) because the queried object is not yet set
 			if ( self::POST_TYPE_KEY === $query->get( 'post_type' ) ) {
 				$query->tribe_ext_is_event_instructor = true;
+
+				// Override Previous and Next navigation links
+				// Commented the following two filters out because the Past Events and Next Events displays do not work (they don't work for Organizers or Venues either) so we just force not displaying the links at all (the next two filters below).
+				// add_filter( 'tribe_get_listview_prev_link', array( $this, 'override_previous_link' ) );
+				// add_filter( 'tribe_get_listview_next_link', array( $this, 'override_next_link' ) );
+
+				// Single Instructor Page: Force Previous and Next navigation links to not appear.
+				add_filter( 'tribe_has_previous_event', '__return_false' );
+				add_filter( 'tribe_has_next_event', '__return_false' );
 			}
 		}
 
@@ -1056,6 +1073,108 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			}
 
 			return $template;
+		}
+
+		/**
+		 * Shutdown the view, restore the query, etc. This happens right after
+		 * the view file is included.
+		 **/
+		public function shutdown_view() {
+			$this->unhook_view();
+		}
+
+		/**
+		 * Unhook the hooks we set on this view.
+		 **/
+		private function unhook_view() {
+			// set notices
+			remove_action( 'tribe_events_before_view', array( $this, 'set_notices' ) );
+			// cleanup after view (reset query, etc)
+			remove_action( 'tribe_events_after_view', array( $this, 'shutdown_view' ) );
+		}
+
+		/**
+		 * Set up the notices for this template
+		 **/
+		public function set_notices() {
+			// By default we only display notices if no events could be found
+			if ( have_posts() ) {
+				return;
+			}
+
+			// Set an appropriate no-results-found message
+			$this->nothing_found_notice();
+		}
+
+		/**
+		 * Override the Previous Events link on the Single Instructor page.
+		 *
+		 * @param $link
+		 *
+		 * @return string
+		 */
+		public function override_previous_link( $link ) {
+			parse_str( $link, $result );
+
+			if ( empty( $result[ 'tribe_event_display' ] ) ) {
+				$tribe_event_display = 'past';
+			} else {
+				$tribe_event_display = $result[ 'tribe_event_display' ];
+			}
+
+			if ( empty( $result[ 'tribe_paged' ] ) ) {
+				$tribe_paged = '1';
+			} else {
+				$tribe_paged = $result[ 'tribe_paged' ];
+			}
+
+			$args = array(
+				'tribe_event_display' => $tribe_event_display,
+				'tribe_paged'         => $tribe_paged,
+			);
+
+			$link = add_query_arg( $args, get_permalink( get_the_ID() ) );
+
+			return $link;
+		}
+
+		/**
+		 * Override the Next Events link on the Single Instructor page.
+		 *
+		 * @param $link
+		 *
+		 * @return string
+		 */
+		public function override_next_link( $link ) {
+			parse_str( $link, $result );
+
+			if ( empty( $result[ 'tribe_event_display' ] ) ) {
+				$tribe_event_display = 'next';
+			} else {
+				$tribe_event_display = $result[ 'tribe_event_display' ];
+			}
+
+			if ( empty( $result[ 'tribe_paged' ] ) ) {
+				$tribe_paged = '1';
+			} else {
+				$tribe_paged = $result[ 'tribe_paged' ];
+			}
+
+			$args = array(
+				'tribe_event_display' => $tribe_event_display,
+				'tribe_paged'         => $tribe_paged,
+			);
+
+			$link = add_query_arg( $args, get_permalink( get_the_ID() ) );
+
+			return $link;
+		}
+
+		/**
+		 * Sets an appropriate no results found message.
+		 */
+		protected function nothing_found_notice() {
+			Tribe__Notices::set_notice( 'event-search-no-results', esc_html__( 'There were no results found.', 'tribe-ext-instructor-linked-post-type' ) );
 		}
 
 		/**
