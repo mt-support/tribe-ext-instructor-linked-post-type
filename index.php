@@ -351,14 +351,12 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 * @see Linked_Posts::register_linked_post_type()
 		 */
 		public function register_our_post_type() {
-			$post_type_key = self::POST_TYPE_KEY;
-
 			$labels = array(
 				'name'                    => esc_html_x( 'Instructors', 'Post type general name', 'tribe-ext-instructor-linked-post-type' ),
 				'singular_name'           => esc_html_x( 'Instructor', 'Post type singular name', 'tribe-ext-instructor-linked-post-type' ),
 				'singular_name_lowercase' => esc_html_x( 'instructor', 'Post type singular name', 'tribe-ext-instructor-linked-post-type' ),
 				// not part of WP's labels but is required by Linked_Posts::register_linked_post_type()
-				'add_new'                 => esc_html_x( 'Add New', $post_type_key, 'tribe-ext-instructor-linked-post-type' ),
+				'add_new'                 => esc_html_x( 'Add New', self::POST_TYPE_KEY, 'tribe-ext-instructor-linked-post-type' ),
 				'add_new_item'            => esc_html__( 'Add New Instructor', 'tribe-ext-instructor-linked-post-type' ),
 				'edit_item'               => esc_html__( 'Edit Instructor', 'tribe-ext-instructor-linked-post-type' ),
 				'new_item'                => esc_html__( 'New Instructor', 'tribe-ext-instructor-linked-post-type' ),
@@ -382,7 +380,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 				'exclude_from_search' => true,
 				'show_in_menu'        => 'edit.php?post_type=' . Tribe__Events__Main::POSTTYPE,
 				'menu_icon'           => 'dashicons-businessman',
-				'capability_type'     => $post_type_key,
+				'capability_type'     => self::POST_TYPE_KEY,
 				'map_meta_cap'        => true, // must be true for $this->set_our_capabilities() to take effect
 				'supports'            => array(
 					'author',
@@ -398,7 +396,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 				),
 			);
 
-			register_post_type( $post_type_key, $args );
+			register_post_type( self::POST_TYPE_KEY, $args );
 		}
 
 		/**
@@ -633,8 +631,6 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			// was this submitted from the single post type editor?
 			$post_type_container_name = $this->get_post_type_container_name();
 
-			$post_type_key = self::POST_TYPE_KEY;
-
 			if (
 				empty( $_POST[ 'post_ID' ] )
 				|| $_POST[ 'post_ID' ] != $post_id
@@ -644,7 +640,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			}
 
 			// is the current user allowed to edit this post?
-			if ( ! current_user_can( 'edit_' . $post_type_key, $post_id ) ) {
+			if ( ! current_user_can( 'edit_' . self::POST_TYPE_KEY, $post_id ) ) {
 				return;
 			}
 
@@ -663,10 +659,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 * @param string $post_type The post type that is being modified.
 		 */
 		public function event_edit_form_create_fields( $post_type ) {
-			$post_type_key = self::POST_TYPE_KEY;
-
 			// We only want to affect our own post type; bail if it's some other post type.
-			if ( $post_type_key !== $post_type ) {
+			if ( self::POST_TYPE_KEY !== $post_type ) {
 				return;
 			}
 
@@ -768,7 +762,15 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		}
 
 		/**
-		 * Updates an instructor
+		 * Updates an instructor.
+         *
+         * This method is different from Tribe__Events__Organizer::update(). We
+         * removed things we didn't need for this context, since we only really
+         * pass the custom fields to this and let WordPress core do it's thing
+         * with the title, post_content, etc.
+         *
+         * @see Tribe__Extension__Instructor_Linked_Post_Type::event_edit_form_save_data()
+         * @see Tribe__Extension__Instructor_Linked_Post_Type::save_data_from_meta_box()
 		 *
 		 * @param int   $id The instructor ID to update.
 		 * @param array $data The instructor data.
@@ -778,38 +780,18 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		protected function update_existing( $id, $data ) {
 			$data = new Tribe__Data( $data, '' );
 
-			$our_id = $this->get_post_id_field_name();
-
-			unset( $data[ $our_id ] );
-
-			$args = array_filter( array(
-				'ID'            => $id,
-				'post_title'    => Tribe__Utils__Array::get( $data, 'post_title', $data[ 'Organizer' ] ), // TODO
-				'post_content'  => Tribe__Utils__Array::get( $data, 'post_content', $data[ 'Description' ] ),
-				'post_excerpt'  => Tribe__Utils__Array::get( $data, 'post_excerpt', $data[ 'Excerpt' ] ),
-				'post_author'   => $data[ 'post_author' ],
-				'post_date'     => $data[ 'post_date' ],
-				'post_date_gmt' => $data[ 'post_date_gmt' ],
-				'post_status'   => $data[ 'post_status' ],
-			) );
-
 			// Update existing. Beware of the potential for infinite loops if you hook to 'save_post' (if it aggressively affects all post types) or if you hook to 'save_post_' . self::POST_TYPE_KEY
-			if ( 1 < count( $args ) ) {
+			if ( 0 < absint( $id ) ) {
+				$args = array( 'ID' => $id );
 				$tag = 'save_post_' . self::POST_TYPE_KEY;
 				remove_action( $tag, array( $this, 'save_data_from_meta_box' ), 16 );
 				wp_update_post( $args );
 				add_action( $tag, array( $this, 'save_data_from_meta_box' ), 16, 2 );
+
+				$meta = array_diff_key( $data->to_array(), array_combine( Tribe__Duplicate__Post::$post_table_columns, Tribe__Duplicate__Post::$post_table_columns ) );
+
+				$this->save_meta( $id, $meta );
 			}
-
-			// TODO?
-			$post_fields = array_merge( Tribe__Duplicate__Post::$post_table_columns, array(
-				'Description',
-				'Excerpt',
-			) );
-
-			$meta = array_diff_key( $data->to_array(), array_combine( $post_fields, $post_fields ) );
-
-			$this->save_meta( $id, $meta );
 
 			return $id;
 		}
@@ -825,7 +807,6 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			$our_id = $this->get_post_id_field_name();
 
 			$name_field_index = $this->get_post_type_container_name();
-
 
 			if ( isset( $data[ 'FeaturedImage' ] ) && ! empty( $data[ 'FeaturedImage' ] ) ) {
 				update_post_meta( $post_id, '_thumbnail_id', $data[ 'FeaturedImage' ] );
@@ -920,8 +901,6 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		public function output_linked_posts() {
 			$output = '';
 
-			$post_type_key = esc_attr( self::POST_TYPE_KEY );
-
 			$linked_posts = tribe_get_linked_posts_by_post_type( get_the_ID(), self::POST_TYPE_KEY );
 
 			if ( ! empty( $linked_posts ) ) {
@@ -930,7 +909,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 				<div class="tribe-events-meta-group">
 				<h3 class="tribe-events-single-section-title">%s</h3>
 				<div class="all-linked-%s">',
-					$post_type_key,
+					esc_attr( self::POST_TYPE_KEY ),
 					$this->get_post_type_label(),
 					self::POST_TYPE_KEY
 				);
@@ -945,7 +924,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 					</dd>
 					%6$s
 					</dl>',
-						$post_type_key,
+						esc_attr( self::POST_TYPE_KEY ),
 						esc_attr( $post_id ),
 						esc_url( get_permalink( $post_id ) ),
 						esc_attr( get_the_title( $post_id ) ),
@@ -972,11 +951,9 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 				return;
 			}
 
-			$post_type_key = self::POST_TYPE_KEY;
+			$container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', esc_attr( self::POST_TYPE_KEY ) );
 
-			$container_selector = sprintf( '.single-tribe_events .tribe-linked-type-%s .tribe-events-meta-group', $post_type_key );
-
-			$parent_selector = sprintf( '.single-tribe_events .all-linked-%s', $post_type_key );
+			$parent_selector = sprintf( '.single-tribe_events .all-linked-%s', esc_attr( self::POST_TYPE_KEY ) );
 			?>
 
             <style type="text/css">
