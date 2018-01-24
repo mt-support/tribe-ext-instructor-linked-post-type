@@ -763,14 +763,14 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 
 		/**
 		 * Updates an instructor.
-         *
-         * This method is different from Tribe__Events__Organizer::update(). We
-         * removed things we didn't need for this context, since we only really
-         * pass the custom fields to this and let WordPress core do it's thing
-         * with the title, post_content, etc.
-         *
-         * @see Tribe__Extension__Instructor_Linked_Post_Type::event_edit_form_save_data()
-         * @see Tribe__Extension__Instructor_Linked_Post_Type::save_data_from_meta_box()
+		 *
+		 * This method is different from Tribe__Events__Organizer::update(). We
+		 * removed things we didn't need for this context, since we only really
+		 * pass the custom fields to this and let WordPress core do it's thing
+		 * with the title, post_content, etc.
+		 *
+		 * @see Tribe__Extension__Instructor_Linked_Post_Type::event_edit_form_save_data()
+		 * @see Tribe__Extension__Instructor_Linked_Post_Type::save_data_from_meta_box()
 		 *
 		 * @param int   $id The instructor ID to update.
 		 * @param array $data The instructor data.
@@ -783,7 +783,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			// Update existing. Beware of the potential for infinite loops if you hook to 'save_post' (if it aggressively affects all post types) or if you hook to 'save_post_' . self::POST_TYPE_KEY
 			if ( 0 < absint( $id ) ) {
 				$args = array( 'ID' => $id );
-				$tag = 'save_post_' . self::POST_TYPE_KEY;
+				$tag  = 'save_post_' . self::POST_TYPE_KEY;
 				remove_action( $tag, array( $this, 'save_data_from_meta_box' ), 16 );
 				wp_update_post( $args );
 				add_action( $tag, array( $this, 'save_data_from_meta_box' ), 16, 2 );
