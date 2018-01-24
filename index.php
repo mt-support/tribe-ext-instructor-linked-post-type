@@ -460,6 +460,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @param string $id_field Field name of the field that will hold the ID
 		 * @param string $post_type Post type of linked post
+		 *
+		 * @return string
 		 */
 		public function linked_post_id_field_index( $id_field, $post_type ) {
 			if ( self::POST_TYPE_KEY === $post_type ) {
@@ -474,6 +476,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @param string $name Post type name index.
 		 * @param string $post_type Post type.
+		 *
+		 * @return string
 		 */
 		public function get_post_type_name_field_index( $name, $post_type ) {
 			if ( self::POST_TYPE_KEY === $post_type ) {
@@ -501,6 +505,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @param string $container Container index that holds submitted data
 		 * @param string $post_type Post type of linked post
+		 *
+		 * @return string
 		 */
 		public function linked_post_type_container( $container, $post_type ) {
 			if ( self::POST_TYPE_KEY === $post_type ) {
@@ -801,7 +807,6 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @param int   $post_id The Post ID.
 		 * @param array $data The post's data.
-		 *
 		 */
 		public function save_meta( $post_id, $data ) {
 			$our_id = $this->get_post_id_field_name();
@@ -982,8 +987,6 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 * @see tribe_is_event_query()
 		 *
 		 * @param $query
-		 *
-		 * @return bool|void
 		 */
 		public function set_post_type_in_parse_query( $query ) {
 			// Cannot use is_singular() within parse_query (which runs before pre_get_posts) because the queried object is not yet set
@@ -1008,9 +1011,9 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @see tribe_is_event_query()
 		 *
-		 * @param $tribe_is_event_query
+		 * @param bool $tribe_is_event_query
 		 *
-		 * @return bool|void
+		 * @return bool
 		 */
 		public function set_event_query_for_this_single_post( $tribe_is_event_query ) {
 			global $wp_query;
@@ -1019,7 +1022,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			if ( ! empty( $wp_query->tribe_ext_is_event_instructor ) ) {
 				return true;
 			} else {
-				return $tribe_is_event_query;
+				return (bool) $tribe_is_event_query;
 			}
 		}
 
@@ -1042,7 +1045,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @param $template
 		 *
-		 * @return template
+		 * @return string
 		 */
 		public function set_current_view_template( $template ) {
 			if ( is_singular( self::POST_TYPE_KEY ) ) {
@@ -1158,6 +1161,8 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 * Output the upcoming events associated with one of our posts.
 		 *
 		 * @see tribe_organizer_upcoming_events()
+         *
+         * @return string|void
 		 */
 		public function get_upcoming_events( $post_id = false ) {
 			$post_id = Tribe__Events__Main::postIdHelper( $post_id );
