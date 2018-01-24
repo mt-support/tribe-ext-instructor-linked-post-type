@@ -545,20 +545,20 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			$post_id = $post->ID;
 			?>
 
-            <style type="text/css">
-                #EventInfo-<?php echo self::POST_TYPE_KEY; ?> {
-                    border: none;
-                }
-            </style>
-            <div id='eventDetails-<?php echo self::POST_TYPE_KEY; ?>' class="inside eventForm">
-                <table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo self::POST_TYPE_KEY; ?>">
+			<style type="text/css">
+				#EventInfo-<?php echo self::POST_TYPE_KEY; ?> {
+					border: none;
+				}
+			</style>
+			<div id='eventDetails-<?php echo self::POST_TYPE_KEY; ?>' class="inside eventForm">
+				<table cellspacing="0" cellpadding="0" id="EventInfo-<?php echo self::POST_TYPE_KEY; ?>">
 					<?php
 					foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
 						echo $this->get_meta_box_tr_html_for_a_field_label( $custom_field_label, $post_id );
 					}
 					?>
-                </table>
-            </div>
+				</table>
+			</div>
 			<?php
 		}
 
@@ -956,21 +956,21 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			$parent_selector = sprintf( '.single-tribe_events .all-linked-%s', esc_attr( self::POST_TYPE_KEY ) );
 			?>
 
-            <style type="text/css">
-                <?php echo $container_selector; ?> {
-                    width: 100%;
-                }
-                <?php echo $parent_selector; ?> {
-                    display: flex;
-                    flex-wrap: wrap;
-                    align-content: space-between;
-                }
-                <?php echo $parent_selector; ?> > dl {
-                    margin-bottom: 20px;
-                    min-width: 250px;
-                    flex: 0 0 20%;
-                }
-            </style>
+			<style type="text/css">
+				<?php echo $container_selector; ?> {
+					width: 100%;
+				}
+				<?php echo $parent_selector; ?> {
+					display: flex;
+					flex-wrap: wrap;
+					align-content: space-between;
+				}
+				<?php echo $parent_selector; ?> > dl {
+					margin-bottom: 20px;
+					min-width: 250px;
+					flex: 0 0 20%;
+				}
+			</style>
 
 			<?php
 		}
