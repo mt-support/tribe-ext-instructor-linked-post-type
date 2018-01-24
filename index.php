@@ -79,7 +79,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			// Linked Post Types started in version 4.2
 			// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
 			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
-			$this->set_url( 'https://theeventscalendar.com/knowledgebase/abstract-post-types/' );
+			$this->set_url( 'https://theeventscalendar.com/knowledgebase/linked-post-types/' );
 
 			/**
 			 * Ideally, we would only flush rewrite rules on plugin activation and
