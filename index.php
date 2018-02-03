@@ -71,6 +71,15 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		const POST_TYPE_KEY = 'tribe_ext_instructor';
 
 		/**
+		 * Our post type's rewrite slug and singular_name_lowercase.
+		 *
+		 * Must be lowercase and no spaces.
+		 *
+		 * @return string
+		 */
+		const POST_TYPE_SLUG = 'instructor';
+
+		/**
 		 * Setup the Extension's properties.
 		 *
 		 * This always executes even if the required plugins are not present.
@@ -78,8 +87,9 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		public function construct() {
 			// Linked Post Types started in version 4.2
 			// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
-			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
 			$this->set_url( 'https://theeventscalendar.com/knowledgebase/linked-post-types/' );
+			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
+			add_action( 'tribe_plugins_loaded', array( $this, 'required_tribe_classes' ), 0 );
 
 			/**
 			 * Ideally, we would only flush rewrite rules on plugin activation and
@@ -136,6 +146,15 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			 * outermost/container div.
 			 */
 			add_action( 'tribe_events_single_event_meta_primary_section_end', array( $this, 'output_linked_posts' ) );
+		}
+
+		/**
+		 * Check required plugins after all Tribe plugins have loaded.
+		 */
+		public function required_tribe_classes() {
+			if ( Tribe__Dependency::instance()->is_plugin_active( 'Tribe__Events__Filterbar__View' ) ) {
+				$this->add_required_plugin( 'Tribe__Events__Filterbar__View', '4.3.1' );
+			}
 		}
 
 		/**
@@ -354,7 +373,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			$labels = array(
 				'name'                    => esc_html_x( 'Instructors', 'Post type general name', 'tribe-ext-instructor-linked-post-type' ),
 				'singular_name'           => esc_html_x( 'Instructor', 'Post type singular name', 'tribe-ext-instructor-linked-post-type' ),
-				'singular_name_lowercase' => esc_html_x( 'instructor', 'Post type singular name', 'tribe-ext-instructor-linked-post-type' ),
+				'singular_name_lowercase' => esc_html_x( self::POST_TYPE_SLUG, 'Post type singular name', 'tribe-ext-instructor-linked-post-type' ),
 				// not part of WP's labels but is required by Linked_Posts::register_linked_post_type()
 				'add_new'                 => esc_html_x( 'Add New', self::POST_TYPE_KEY, 'tribe-ext-instructor-linked-post-type' ),
 				'add_new_item'            => esc_html__( 'Add New Instructor', 'tribe-ext-instructor-linked-post-type' ),
@@ -391,7 +410,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 					'title',
 				),
 				'rewrite'             => array(
-					'slug'       => 'instructor',
+					'slug'       => self::POST_TYPE_SLUG,
 					'with_front' => false,
 				),
 			);
