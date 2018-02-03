@@ -1207,8 +1207,8 @@ if (
 		 * Output the upcoming events associated with one of our posts.
 		 *
 		 * @see tribe_organizer_upcoming_events()
-         *
-         * @return string|void
+		 *
+		 * @return string
 		 */
 		public function get_upcoming_events( $post_id = false ) {
 			$post_id = Tribe__Events__Main::postIdHelper( $post_id );
