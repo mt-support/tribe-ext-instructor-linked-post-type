@@ -11,17 +11,13 @@
  * Text Domain:     tribe-ext-instructor-linked-post-type
  */
 
-// Do not load unless Tribe Common is fully loaded.
-if ( ! class_exists( 'Tribe__Extension' ) ) {
-	return;
-}
-
 /**
  * TODO: How to Fork this...
- * Find and replace (case-sensitive) all mentions of "instructor" and "instructors", including the following:
+ * Find and replace (case-sensitive) all mentions of "instructor" and "instructors" (both lowercase and uppercase), including the following:
  *** The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
  *** The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
  *** This file's class name
+ *** The src/Filterbar-Filter.php file's class name and its references to this class' name.
  * Then, replace with your own post type and register_post_type() arguments as appropriate for your project.
  * And add your own custom fields -- see $this->get_custom_field_labels()
  * Check all other "TODO" notes throughout this file
@@ -51,8 +47,10 @@ if ( ! function_exists( 'tribe_ext_is_event_instructor' ) ) {
  * anything, double-check that the class name was changed everywhere (search
  * and replace).
  */
-if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
-
+if (
+	class_exists( 'Tribe__Extension' )
+	&& ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' )
+) {
 	/**
 	 * Extension main class, class begins loading on init() function.
 	 */
@@ -80,6 +78,13 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		const POST_TYPE_SLUG = 'instructor';
 
 		/**
+		 * Is Filterbar active. If yes, we'll add some extra functionality.
+		 *
+		 * @return bool
+		 */
+		public $filterbar_active = false;
+
+		/**
 		 * Setup the Extension's properties.
 		 *
 		 * This always executes even if the required plugins are not present.
@@ -89,7 +94,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
 			$this->set_url( 'https://theeventscalendar.com/knowledgebase/linked-post-types/' );
 			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
-			add_action( 'tribe_plugins_loaded', array( $this, 'required_tribe_classes' ), 0 );
+			add_action( 'tribe_plugins_loaded', array( $this, 'detect_filterbar' ), 0 );
 
 			/**
 			 * Ideally, we would only flush rewrite rules on plugin activation and
@@ -146,14 +151,33 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			 * outermost/container div.
 			 */
 			add_action( 'tribe_events_single_event_meta_primary_section_end', array( $this, 'output_linked_posts' ) );
+
+			// Support Filter Bar if it is active.
+			if (
+				$this->filterbar_active
+				&& file_exists( dirname(__FILE__) . '/src/Filterbar-Filter.php' )
+			) {
+				include_once (dirname(__FILE__) . '/src/Filterbar-Filter.php');
+				add_action('tribe_events_filters_create_filters',array($this, 'add_filter_to_filterbar'));
+			}
 		}
 
 		/**
 		 * Check required plugins after all Tribe plugins have loaded.
 		 */
-		public function required_tribe_classes() {
+		public function detect_filterbar() {
 			if ( Tribe__Dependency::instance()->is_plugin_active( 'Tribe__Events__Filterbar__View' ) ) {
 				$this->add_required_plugin( 'Tribe__Events__Filterbar__View', '4.3.1' );
+				$this->filterbar_active = true;
+			}
+		}
+
+		/**
+		 * Check required plugins after all Tribe plugins have loaded.
+		 */
+		public function add_filter_to_filterbar() {
+			if ( class_exists( 'Tribe__Events__Filterbar__Filters__Instructor' ) ) {
+				new Tribe__Events__Filterbar__Filters__Instructor( $this->get_post_type_label(), self::POST_TYPE_SLUG );
 			}
 		}
 
@@ -275,6 +299,9 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			foreach ( $this->get_custom_field_labels() as $custom_field_label ) {
 				$custom_field_key = $this->get_a_custom_field_key_from_label( $custom_field_label );
 				if ( $custom_field_key == $meta_key ) {
+					// Always run all fields through esc_html()
+					$meta_value = esc_html( $meta_value );
+
 					// TODO: Add your own logic here for each field label that requires it.
 					// Note that no help text regarding this validation is displayed to the user so they may be surprised by the result (e.g. if they had a typo in the email address, forgetting the @ symbol).
 					if ( 'Website' == $custom_field_label ) {
@@ -320,7 +347,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @see Tribe__Events__Linked_Posts::get_meta_key()
 		 */
-		protected function get_linked_post_type_custom_field_key() {
+		public function get_linked_post_type_custom_field_key() {
 			return Tribe__Events__Linked_Posts::META_KEY_PREFIX . self::POST_TYPE_KEY;
 		}
 
@@ -470,7 +497,7 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 		 *
 		 * @return string
 		 */
-		protected function get_post_id_field_name() {
+		public function get_post_id_field_name() {
 			return $this->get_post_type_label( 'singular_name' ) . '_ID'; // Instructor_ID
 		}
 
@@ -1204,5 +1231,5 @@ if ( ! class_exists( 'Tribe__Extension__Instructor_Linked_Post_Type' ) ) {
 			}
 		}
 
-	} // end Tribe__Extension__Instructor_Linked_Post_Type
-} // end if !class_exists Tribe__Extension__Instructor_Linked_Post_Type
+	} // end class
+} // end class_exists check
