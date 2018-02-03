@@ -155,10 +155,10 @@ if (
 			// Support Filter Bar if it is active.
 			if (
 				$this->filterbar_active
-				&& file_exists( dirname(__FILE__) . '/src/Filterbar-Filter.php' )
+				&& file_exists( dirname( __FILE__ ) . '/src/Filterbar-Filter.php' )
 			) {
-				include_once (dirname(__FILE__) . '/src/Filterbar-Filter.php');
-				add_action('tribe_events_filters_create_filters',array($this, 'add_filter_to_filterbar'));
+				include_once( dirname( __FILE__ ) . '/src/Filterbar-Filter.php' );
+				add_action( 'tribe_events_filters_create_filters', array( $this, 'add_filter_to_filterbar' ) );
 			}
 		}
 
@@ -249,7 +249,7 @@ if (
 		 */
 		public function has_this_post_types_custom_fields( $data ) {
 			foreach ( $this->get_custom_field_keys() as $key ) {
-				if ( isset( $data[ $key ] ) && $data[ $key ] ) {
+				if ( isset( $data[$key] ) && $data[$key] ) {
 					return true;
 				}
 			}
@@ -394,7 +394,7 @@ if (
 		 * @link https://developer.wordpress.org/reference/functions/get_post_type_labels/
 		 * @link https://developer.wordpress.org/reference/functions/register_post_type/
 		 *
-		 * @see Linked_Posts::register_linked_post_type()
+		 * @see  Linked_Posts::register_linked_post_type()
 		 */
 		public function register_our_post_type() {
 			$labels = array(
@@ -472,7 +472,7 @@ if (
 		 * If 'allow_creation' is not set to TRUE, can only "find" posts via the
 		 * drop-down chooser, not also create them, when creating a new Event.
 		 *
-		 * @param array  $args Array of linked post type arguments
+		 * @param array  $args      Array of linked post type arguments
 		 * @param string $post_type Linked post type
 		 *
 		 * @return array
@@ -482,7 +482,7 @@ if (
 				return $args;
 			}
 
-			$args[ 'allow_creation' ] = true;
+			$args['allow_creation'] = true;
 
 			return $args;
 		}
@@ -504,7 +504,7 @@ if (
 		/**
 		 * Filters the linked post id field.
 		 *
-		 * @param string $id_field Field name of the field that will hold the ID
+		 * @param string $id_field  Field name of the field that will hold the ID
 		 * @param string $post_type Post type of linked post
 		 *
 		 * @return string
@@ -520,7 +520,7 @@ if (
 		/**
 		 * Filter the linked post name field.
 		 *
-		 * @param string $name Post type name index.
+		 * @param string $name      Post type name index.
 		 * @param string $post_type Post type.
 		 *
 		 * @return string
@@ -634,7 +634,8 @@ if (
 				$value = '';
 			}
 
-			$name = sprintf( '%s[%s]',
+			$name = sprintf(
+				'%s[%s]',
 				$this->get_post_type_container_name(),
 				$custom_field_key
 			);
@@ -677,16 +678,16 @@ if (
 		 * @see Tribe__Events__Organizer::update()
 		 *
 		 * @param int     $post_id The Post ID.
-		 * @param WP_Post $post The post object.
+		 * @param WP_Post $post    The post object.
 		 */
 		public function save_data_from_meta_box( $post_id = null, $post = null ) {
 			// was this submitted from the single post type editor?
 			$post_type_container_name = $this->get_post_type_container_name();
 
 			if (
-				empty( $_POST[ 'post_ID' ] )
-				|| $_POST[ 'post_ID' ] != $post_id
-				|| empty( $_POST[ $post_type_container_name ] )
+				empty( $_POST['post_ID'] )
+				|| $_POST['post_ID'] != $post_id
+				|| empty( $_POST[$post_type_container_name] )
 			) {
 				return;
 			}
@@ -696,7 +697,7 @@ if (
 				return;
 			}
 
-			$data = stripslashes_deep( $_POST[ $post_type_container_name ] );
+			$data = stripslashes_deep( $_POST[$post_type_container_name] );
 
 			$this->update_existing( $post_id, $data );
 		}
@@ -724,11 +725,11 @@ if (
 		/**
 		 * Saves the instructor information passed via an event.
 		 *
-		 * @param string $id Post type ID index.
-		 * @param array  $data Data for submission.
+		 * @param string $id               Post type ID index.
+		 * @param array  $data             Data for submission.
 		 * @param string $linked_post_type Post type.
-		 * @param string $post_status Post status.
-		 * @param int    $event_id Post ID of the post the post type is attached to.
+		 * @param string $post_status      Post status.
+		 * @param int    $event_id         Post ID of the post the post type is attached to.
 		 *
 		 * @see Tribe__Events__Linked_Posts::get_post_type_id_field_index()
 		 * @see Tribe__Events__Linked_Posts::handle_submission_by_post_type()
@@ -740,20 +741,20 @@ if (
 
 			// Check to see if we're updating an already-existing post.
 			if (
-				isset( $data[ $our_id ] )
-				&& 0 < (int) $data[ $our_id ]
+				isset( $data[$our_id] )
+				&& 0 < (int) $data[$our_id]
 			) {
 				if (
-					! empty( $data[ $our_id ] )
+					! empty( $data[$our_id] )
 					&& 1 === count( $data )
 				) {
 					// We're updating an existing post but only an ID was passed, no other data.
 					// So just return the ID, i.e. do nothing.
-					return $data[ $our_id ];
+					return $data[$our_id];
 				} else {
 					// Need to update an existing post.
 					// See Tribe__Events__Organizer->update() for inspiration how to make an "update" function.
-					return $this->update_existing( $data[ $our_id ], $data );
+					return $this->update_existing( $data[$our_id], $data );
 				}
 			}
 
@@ -764,7 +765,7 @@ if (
 		/**
 		 * Creates a new Instructor
 		 *
-		 * @param array  $data The Instructor data.
+		 * @param array  $data        The Instructor data.
 		 * @param string $post_status the Intended post status.
 		 *
 		 * @see Tribe__Events__Organizer::create() Inspiration for additional functionality, such as implementing Avoid Duplicates.
@@ -775,20 +776,20 @@ if (
 			$name_field_index = $this->get_post_type_container_name();
 
 			if (
-				( isset( $data[ $name_field_index ] )
-				  && $data[ $name_field_index ]
+				( isset( $data[$name_field_index] )
+					&& $data[$name_field_index]
 				)
 				|| $this->has_this_post_types_custom_fields( $data )
 			) {
-				$title   = isset( $data[ $name_field_index ] ) ? $data[ $name_field_index ]:sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructor-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
-				$content = isset( $data[ 'Description' ] ) ? $data[ 'Description' ]:'';
+				$title   = isset( $data[$name_field_index] ) ? $data[$name_field_index] : sprintf( esc_html__( 'Unnamed %s', 'tribe-ext-instructor-linked-post-type' ), $this->get_post_type_label( 'singular_name' ) );
+				$content = isset( $data['Description'] ) ? $data['Description'] : '';
 				$slug    = sanitize_title( $title );
 
 				$data = new Tribe__Data( $data );
 
 				$our_id = $this->get_post_id_field_name();
 
-				unset( $data[ $our_id ] );
+				unset( $data[$our_id] );
 
 				$postdata = array(
 					'post_title'    => $title,
@@ -796,9 +797,9 @@ if (
 					'post_name'     => $slug,
 					'post_type'     => self::POST_TYPE_KEY,
 					'post_status'   => Tribe__Utils__Array::get( $data, 'post_status', $post_status ),
-					'post_author'   => $data[ 'post_author' ],
-					'post_date'     => $data[ 'post_date' ],
-					'post_date_gmt' => $data[ 'post_date_gmt' ],
+					'post_author'   => $data['post_author'],
+					'post_date'     => $data['post_date'],
+					'post_date_gmt' => $data['post_date_gmt'],
 				);
 
 				$instructor_id = wp_insert_post( array_filter( $postdata ), true );
@@ -824,7 +825,7 @@ if (
 		 * @see Tribe__Extension__Instructor_Linked_Post_Type::event_edit_form_save_data()
 		 * @see Tribe__Extension__Instructor_Linked_Post_Type::save_data_from_meta_box()
 		 *
-		 * @param int   $id The instructor ID to update.
+		 * @param int   $id   The instructor ID to update.
 		 * @param array $data The instructor data.
 		 *
 		 * @return int The updated instructor post ID
@@ -852,27 +853,27 @@ if (
 		 * Saves our post type's custom fields.
 		 *
 		 * @param int   $post_id The Post ID.
-		 * @param array $data The post's data.
+		 * @param array $data    The post's data.
 		 */
 		public function save_meta( $post_id, $data ) {
 			$our_id = $this->get_post_id_field_name();
 
 			$name_field_index = $this->get_post_type_container_name();
 
-			if ( isset( $data[ 'FeaturedImage' ] ) && ! empty( $data[ 'FeaturedImage' ] ) ) {
-				update_post_meta( $post_id, '_thumbnail_id', $data[ 'FeaturedImage' ] );
-				unset( $data[ 'FeaturedImage' ] );
+			if ( isset( $data['FeaturedImage'] ) && ! empty( $data['FeaturedImage'] ) ) {
+				update_post_meta( $post_id, '_thumbnail_id', $data['FeaturedImage'] );
+				unset( $data['FeaturedImage'] );
 			}
 
 			// No point in saving ID to itself.
-			unset( $data[ $our_id ] );
+			unset( $data[$our_id] );
 
 			/*
 			 * The post name is saved in the post_title.
 			 *
 			 * @see Tribe__Events__Linked_Posts::get_post_type_name_field_index()
 			 */
-			unset( $data[ $name_field_index ] );
+			unset( $data[$name_field_index] );
 
 			foreach ( $data as $meta_key => $meta_value ) {
 				$meta_value = $this->sanitize_a_custom_fields_value( $meta_key, $meta_value );
@@ -1142,16 +1143,16 @@ if (
 		public function override_previous_link( $link ) {
 			parse_str( $link, $result );
 
-			if ( empty( $result[ 'tribe_event_display' ] ) ) {
+			if ( empty( $result['tribe_event_display'] ) ) {
 				$tribe_event_display = 'past';
 			} else {
-				$tribe_event_display = $result[ 'tribe_event_display' ];
+				$tribe_event_display = $result['tribe_event_display'];
 			}
 
-			if ( empty( $result[ 'tribe_paged' ] ) ) {
+			if ( empty( $result['tribe_paged'] ) ) {
 				$tribe_paged = '1';
 			} else {
-				$tribe_paged = $result[ 'tribe_paged' ];
+				$tribe_paged = $result['tribe_paged'];
 			}
 
 			$args = array(
@@ -1174,16 +1175,16 @@ if (
 		public function override_next_link( $link ) {
 			parse_str( $link, $result );
 
-			if ( empty( $result[ 'tribe_event_display' ] ) ) {
+			if ( empty( $result['tribe_event_display'] ) ) {
 				$tribe_event_display = 'next';
 			} else {
-				$tribe_event_display = $result[ 'tribe_event_display' ];
+				$tribe_event_display = $result['tribe_event_display'];
 			}
 
-			if ( empty( $result[ 'tribe_paged' ] ) ) {
+			if ( empty( $result['tribe_paged'] ) ) {
 				$tribe_paged = '1';
 			} else {
-				$tribe_paged = $result[ 'tribe_paged' ];
+				$tribe_paged = $result['tribe_paged'];
 			}
 
 			$args = array(
@@ -1232,4 +1233,4 @@ if (
 		}
 
 	} // end class
-} // end class_exists check
+} // end if class_exists check
