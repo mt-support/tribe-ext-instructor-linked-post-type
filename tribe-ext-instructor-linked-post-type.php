@@ -113,6 +113,9 @@ if (
 		 * Extension initialization and hooks.
 		 */
 		public function init() {
+			// Load plugin textdomain
+			load_plugin_textdomain( 'tribe-ext-instructor-linked-post-type', false, basename( dirname( __FILE__ ) ) . '/languages/' );
+
 			add_action( 'init', array( $this, 'register_our_post_type' ) );
 			add_action( 'init', array( $this, 'link_post_type_to_events' ) );
 			add_action( 'wp_loaded', array( $this, 'set_our_capabilities' ) );
