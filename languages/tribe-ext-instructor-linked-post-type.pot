@@ -1,0 +1,137 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Project-Id-Version: The Events Calendar Extension: Instructor Linked Post "
+"Type\n"
+"POT-Creation-Date: 2018-03-15 22:31-0500\n"
+"PO-Revision-Date: 2018-03-15 22:31-0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: tribe-ext-instructor-linked-post-type.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
+
+#: src/views/tribe_ext_instructor/single.php:30
+#, php-format
+msgid "&larr; Back to %s"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:404
+msgctxt "Post type general name"
+msgid "Instructors"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:405
+msgctxt "Post type singular name"
+msgid "Instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:409
+msgid "Add New Instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:410
+msgid "Edit Instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:411
+msgid "New Instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:412
+msgid "View Instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:413
+msgid "View Instructors"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:414
+msgid "Search Instructors"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:415
+msgid "No instructors found"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:416
+msgid "No instructors found in Trash"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:417
+msgid "Instructors"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:418
+msgid "Instructor Archives"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:419
+msgid "Insert into instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:420
+msgid "Uploaded to this instructor"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:421
+msgid "Instructors list"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:422
+msgid "Instructors list navigation"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:427
+msgid "Instructors linked to Events"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:586
+#, php-format
+msgid "%s Information"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:670
+msgid ":"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:787
+#, php-format
+msgid "Unnamed %s"
+msgstr ""
+
+#: tribe-ext-instructor-linked-post-type.php:1210
+msgid "There were no results found."
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "The Events Calendar Extension: Instructor Linked Post Type"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "
+"\"Instructor\" custom post type will be created and linked to The Events "
+"Calendar's Events, like Organizers are, and basic output will be added to "
+"the Single Event Page. See this plugin file's code comments for forking "
+"instructions."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Modern Tribe, Inc."
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://m.tri.be/1971"
+msgstr ""

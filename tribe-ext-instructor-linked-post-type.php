@@ -113,6 +113,9 @@ if (
 		 * Extension initialization and hooks.
 		 */
 		public function init() {
+			// Load plugin textdomain
+			load_plugin_textdomain( 'tribe-ext-instructor-linked-post-type', false, basename( dirname( __FILE__ ) ) . '/languages/' );
+
 			add_action( 'init', array( $this, 'register_our_post_type' ) );
 			add_action( 'init', array( $this, 'link_post_type_to_events' ) );
 			add_action( 'wp_loaded', array( $this, 'set_our_capabilities' ) );
@@ -1037,7 +1040,10 @@ if (
 		 */
 		public function set_post_type_in_parse_query( $query ) {
 			// Cannot use is_singular() within parse_query (which runs before pre_get_posts) because the queried object is not yet set
-			if ( self::POST_TYPE_KEY === $query->get( 'post_type' ) ) {
+			if (
+				! is_admin()
+				&& self::POST_TYPE_KEY === $query->get( 'post_type' )
+			) {
 				$query->tribe_ext_is_event_instructor = true;
 
 				// Override Previous and Next navigation links
