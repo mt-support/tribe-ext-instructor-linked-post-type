@@ -1037,7 +1037,10 @@ if (
 		 */
 		public function set_post_type_in_parse_query( $query ) {
 			// Cannot use is_singular() within parse_query (which runs before pre_get_posts) because the queried object is not yet set
-			if ( self::POST_TYPE_KEY === $query->get( 'post_type' ) ) {
+			if (
+				! is_admin()
+				&& self::POST_TYPE_KEY === $query->get( 'post_type' )
+			) {
 				$query->tribe_ext_is_event_instructor = true;
 
 				// Override Previous and Next navigation links
