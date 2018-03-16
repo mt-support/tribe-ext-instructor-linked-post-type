@@ -43,4 +43,4 @@ tends to be very limited.
 = 1.0.0 2018-03-16 =
 
 * Initial release
-* Known issue: The Single Instructor pages do not have Previous Events or Next Events navigation.
+* Known issue: The Single Instructor pages do not have Previous Events or Next Events navigation. This is the same as Single Organizer pages.
