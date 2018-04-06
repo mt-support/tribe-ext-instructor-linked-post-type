@@ -77,6 +77,8 @@ if (
 		 */
 		const POST_TYPE_SLUG = 'instructor';
 
+		const ORDER_META_KEY = '_InstructorID_Order';
+
 		/**
 		 * Is Filterbar active. If yes, we'll add some extra functionality.
 		 *
@@ -136,6 +138,7 @@ if (
 			add_filter( 'tribe_events_template_paths', array( $this, 'template_paths' ) );
 			add_filter( 'tribe_events_current_view_template', array( $this, 'set_current_view_template' ) );
 
+			add_filter( 'tribe_events_linked_post_type_meta_key', array( $this, 'get_order_meta_key' ), 10, 2 );
 			// Single Instructor page: Handling the No Events Found situation.
 			// We followed how the Tribe__Events__Template_Factory class does it.
 			// cleanup after view (reset query, etc)
@@ -1238,5 +1241,13 @@ if (
 			}
 		}
 
+		public function get_order_meta_key( $return, $post_type ) {
+
+			if ( self::POST_TYPE_KEY === $post_type ) {
+				$return = self::ORDER_META_KEY;
+			}
+
+			return $return;
+		}
 	} // end class
 } // end if class_exists check
