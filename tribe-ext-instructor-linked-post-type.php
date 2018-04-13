@@ -1,18 +1,20 @@
 <?php
 /**
- * Plugin Name:     The Events Calendar Extension: Instructor Linked Post Type
- * Description:     A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "Instructor" custom post type will be created and linked to The Events Calendar's Events, like Organizers are, and basic output will be added to the Single Event Page. See this plugin file's code comments for forking instructions.
- * Version:         1.0.0
- * Extension Class: Tribe__Extension__Instructor_Linked_Post_Type
- * Author:          Modern Tribe, Inc.
- * Author URI:      http://m.tri.be/1971
- * License:         GPL version 3 or any later version
- * License URI:     https://www.gnu.org/licenses/gpl-3.0.html
- * Text Domain:     tribe-ext-instructor-linked-post-type
+ * Plugin Name:       The Events Calendar Extension: Instructor Linked Post Type
+ * GitHub Plugin URI: https://github.com/mt-support/tribe-ext-instructor-linked-post-type
+ * Description:       A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "Instructor" custom post type will be created and linked to The Events Calendar's Events, like Organizers are, and basic output will be added to the Single Event Page. See this plugin file's code comments for forking instructions.
+ * Version:           1.0.1
+ * Extension Class:   Tribe__Extension__Instructor_Linked_Post_Type
+ * Author:            Modern Tribe, Inc.
+ * Author URI:        http://m.tri.be/1971
+ * License:           GPL version 3 or any later version
+ * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
+ * Text Domain:       tribe-ext-instructor-linked-post-type
  */
 
 /**
  * TODO: How to Fork this...
+ * !!! Remove this plugin file's "GitHub Plugin URI" header item or else all your changes will be wiped out upon auto-update!!! We have this on auto-update for users who use the extension as-is instead of forking it.
  * Find and replace (case-sensitive) all mentions of "instructor" and "instructors" (both lowercase and uppercase), including the following:
  *** The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
  *** The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
