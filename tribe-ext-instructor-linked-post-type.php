@@ -512,18 +512,18 @@ if (
 		 * Build the string used for this linked post type's ordering meta key.
 		 *
 		 * Only applicable for The Events Calendar version 4.6.14 or later.
-         * Leading underscore to hide the custom field from wp-admin UI display.
+		 * Leading underscore to hide the custom field from wp-admin UI display.
 		 *
 		 * @see Tribe__Events__Linked_Posts::get_linked_posts_by_post_type()
 		 * @see sanitize_key()
-         *
-         * @since 1.0.1
+		 *
+		 * @since 1.0.1
 		 *
 		 * @return string
 		 */
 		private function get_order_meta_key() {
 			$key = '_' . $this->get_post_id_field_name() . '_Order'; // _Instructor_ID_Order
-            return sanitize_key( $key ); // _instructor_id_order
+			return sanitize_key( $key ); // _instructor_id_order
 		}
 
 		/**
