@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name:       The Events Calendar Extension: Instructor Linked Post Type
+ * Plugin URI:        https://theeventscalendar.com/knowledgebase/linked-post-types/
  * GitHub Plugin URI: https://github.com/mt-support/tribe-ext-instructor-linked-post-type
  * Description:       A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "Instructor" custom post type will be created and linked to The Events Calendar's Events, like Organizers are, and basic output will be added to the Single Event Page. See this plugin file's code comments for forking instructions.
  * Version:           1.0.1
@@ -94,7 +95,6 @@ if (
 		public function construct() {
 			// Linked Post Types started in version 4.2
 			// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
-			$this->set_url( 'https://theeventscalendar.com/knowledgebase/linked-post-types/' );
 			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
 			add_action( 'tribe_plugins_loaded', array( $this, 'detect_filterbar' ), 0 );
 
