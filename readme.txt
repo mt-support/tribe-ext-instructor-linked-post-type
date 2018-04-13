@@ -44,7 +44,7 @@ tends to be very limited.
 
 * Added `GitHub Plugin URI` to the plugin header to enable automatic updates in the future. REMOVE THIS IF YOU FORK this extension instead of using it as-is
 * Linked posts now output in the same order as the wp-admin drag-and-drop order instead of alphabetically
-* This functionality requires The Events Calendar (TEC) version 4.6.14 or later, but this extension can still be used with TEC 4.3.1+
+* This functionality requires The Events Calendar (TEC) version 4.6.14 or later, but this extension can still be used with TEC 4.6+
 * Events with Instructors from prior to this update will need to be re-saved in order to set the meta key that handles the ordering
 
 = 1.0.0 2018-03-16 =
