@@ -523,6 +523,7 @@ if (
 		 */
 		private function get_order_meta_key() {
 			$key = '_' . $this->get_post_id_field_name() . '_Order'; // _Instructor_ID_Order
+
 			return sanitize_key( $key ); // _instructor_id_order
 		}
 
