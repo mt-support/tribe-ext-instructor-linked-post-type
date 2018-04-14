@@ -1,18 +1,21 @@
 <?php
 /**
- * Plugin Name:     The Events Calendar Extension: Instructor Linked Post Type
- * Description:     A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "Instructor" custom post type will be created and linked to The Events Calendar's Events, like Organizers are, and basic output will be added to the Single Event Page. See this plugin file's code comments for forking instructions.
- * Version:         1.0.0
- * Extension Class: Tribe__Extension__Instructor_Linked_Post_Type
- * Author:          Modern Tribe, Inc.
- * Author URI:      http://m.tri.be/1971
- * License:         GPL version 3 or any later version
- * License URI:     https://www.gnu.org/licenses/gpl-3.0.html
- * Text Domain:     tribe-ext-instructor-linked-post-type
+ * Plugin Name:       The Events Calendar Extension: Instructor Linked Post Type
+ * Plugin URI:        https://theeventscalendar.com/knowledgebase/linked-post-types/
+ * GitHub Plugin URI: https://github.com/mt-support/tribe-ext-instructor-linked-post-type
+ * Description:       A boilerplate/starter extension for you to use as-is or fork. Used as-is, an "Instructor" custom post type will be created and linked to The Events Calendar's Events, like Organizers are, and basic output will be added to the Single Event Page. See this plugin file's code comments for forking instructions.
+ * Version:           1.0.1
+ * Extension Class:   Tribe__Extension__Instructor_Linked_Post_Type
+ * Author:            Modern Tribe, Inc.
+ * Author URI:        http://m.tri.be/1971
+ * License:           GPL version 3 or any later version
+ * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
+ * Text Domain:       tribe-ext-instructor-linked-post-type
  */
 
 /**
  * TODO: How to Fork this...
+ * !!! Remove this plugin file's "GitHub Plugin URI" header item or else all your changes will be wiped out upon auto-update!!! We have this on auto-update for users who use the extension as-is instead of forking it.
  * Find and replace (case-sensitive) all mentions of "instructor" and "instructors" (both lowercase and uppercase), including the following:
  *** The name of this plugin directory (but do not remove the leading "tribe-ext-" part!)
  *** The name of this directory's sub-folder: src/views/RENAME_THIS/single.php -- and the content of this single.php
@@ -77,8 +80,6 @@ if (
 		 */
 		const POST_TYPE_SLUG = 'instructor';
 
-		const ORDER_META_KEY = '_InstructorID_Order';
-
 		/**
 		 * Is Filterbar active. If yes, we'll add some extra functionality.
 		 *
@@ -94,7 +95,6 @@ if (
 		public function construct() {
 			// Linked Post Types started in version 4.2
 			// Tribe__Duplicate__Strategy_Factory class exists since version 4.6
-			$this->set_url( 'https://theeventscalendar.com/knowledgebase/linked-post-types/' );
 			$this->add_required_plugin( 'Tribe__Events__Main', '4.6' );
 			add_action( 'tribe_plugins_loaded', array( $this, 'detect_filterbar' ), 0 );
 
@@ -138,7 +138,8 @@ if (
 			add_filter( 'tribe_events_template_paths', array( $this, 'template_paths' ) );
 			add_filter( 'tribe_events_current_view_template', array( $this, 'set_current_view_template' ) );
 
-			add_filter( 'tribe_events_linked_post_type_meta_key', array( $this, 'get_order_meta_key' ), 10, 2 );
+			add_filter( 'tribe_events_linked_post_type_meta_key', array( $this, 'filter_linked_post_type_meta_key' ), 10, 2 );
+
 			// Single Instructor page: Handling the No Events Found situation.
 			// We followed how the Tribe__Events__Template_Factory class does it.
 			// cleanup after view (reset query, etc)
@@ -505,6 +506,25 @@ if (
 		 */
 		public function get_post_id_field_name() {
 			return $this->get_post_type_label( 'singular_name' ) . '_ID'; // Instructor_ID
+		}
+
+		/**
+		 * Build the string used for this linked post type's ordering meta key.
+		 *
+		 * Only applicable for The Events Calendar version 4.6.14 or later.
+		 * Leading underscore to hide the custom field from wp-admin UI display.
+		 *
+		 * @see Tribe__Events__Linked_Posts::get_linked_posts_by_post_type()
+		 * @see sanitize_key()
+		 *
+		 * @since 1.0.1
+		 *
+		 * @return string
+		 */
+		private function get_order_meta_key() {
+			$key = '_' . $this->get_post_id_field_name() . '_Order'; // _Instructor_ID_Order
+
+			return sanitize_key( $key ); // _instructor_id_order
 		}
 
 		/**
@@ -1241,10 +1261,9 @@ if (
 			}
 		}
 
-		public function get_order_meta_key( $return, $post_type ) {
-
+		public function filter_linked_post_type_meta_key( $return, $post_type ) {
 			if ( self::POST_TYPE_KEY === $post_type ) {
-				$return = self::ORDER_META_KEY;
+				$return = $this->get_order_meta_key();
 			}
 
 			return $return;
